@@ -13,6 +13,7 @@ struct pico_fun_t {
 	
 
 	struct fun_led_t	led;
+	struct fun_button_t	btn;
 
 };
 

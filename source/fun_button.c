@@ -42,9 +42,51 @@ bool __no_inline_not_in_flash_func(get_bootsel_button)()
     return button_state;
 }
 
-uint32_t board_button_read (void)
+bool board_button_read (void)
 {
 	return (1 == get_bootsel_button());
 }
+
+
+bool fun_button_timer_cb (struct repeating_timer *t)
+{
+	struct fun_button_t *pBTN = &gFUN.btn;
+
+	bool state_new = board_button_read();
+
+	if (state_new != pBTN->last_state) {
+		if (true == state_new) {
+			pBTN->press_on = true;
+		} else {
+			pBTN->press_off = true;
+		}
+
+		if (pBTN->press_on && pBTN->press_off) {
+			pBTN->count++;
+			pBTN->press_on = false;
+			pBTN->press_off = false;
+			printf("BTN : %d\n", pBTN->count);
+		}
+
+		 pBTN->last_state = state_new;
+	}
+
+    return true;
+}
+
+void fun_button_init (void)
+{
+	struct fun_button_t *pBTN = &gFUN.btn;
+
+	pBTN->last_state = board_button_read();
+
+	pBTN->press_on = false;
+	pBTN->press_off = false;
+	pBTN->count = 0;
+
+	add_repeating_timer_ms(-20, fun_button_timer_cb, NULL, &pBTN->tmr);
+
+}
+
 
 

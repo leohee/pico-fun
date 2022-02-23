@@ -24,7 +24,7 @@ enum {
 struct fun_led_t {
 	uint			pin;
 
-	uint8_t			tmr_ctrl;	/* timer control led */
+	bool			tmr_ctrl;	/* timer control led */
 
 	uint8_t			stage;
 	uint8_t			circle;		/* one or continus */

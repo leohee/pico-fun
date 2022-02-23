@@ -46,6 +46,8 @@ static int fun_pico_init (void)
 
 
 	fun_led_init();
+	fun_button_init();
+
 
 
 	return 0;
@@ -86,16 +88,18 @@ int main (void)
 
 		++i_cnt;
 
-		if (i_cnt == 10) {
+		if (i_cnt % 30 == 10 ) {
+			printf("led toggle 500ms\n");
 			fun_led_show(true, 10, 500, 500);
 		}
 
-		if (i_cnt == 20) {
+		if (i_cnt % 30 == 20 ) {
+			printf("led toggle 250ms\n");
 			fun_led_show(true, 20, 250, 250);
 		}
 
-		if (i_cnt == 30) {
-			fun_led_show(true, 10, 500, 500);
+		if (i_cnt % 30 == 0 ) {
+			printf("led toggle 1000ms\n");
 		}
 
     }
