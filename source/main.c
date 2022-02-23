@@ -2,9 +2,14 @@
 #include <string.h>
 #include "hardware/rtc.h"
 #include "pico/stdlib.h"
+#include "pico/unique_id.h"
 #include "pico/util/datetime.h"
 
-#define BUILD_CLOCK     __DATE__", "__TIME__
+#include "build_ver.h"
+#include "common.h"
+#include "button.h"
+
+struct pico_fun_t gFUN;
 
 void datetime_format(char *buf, uint buf_size, const datetime_t *t)
 {
@@ -14,88 +19,95 @@ void datetime_format(char *buf, uint buf_size, const datetime_t *t)
         t->hour, t->min, t->sec);
 }
 
-static uint8_t utility_conv_month (char *month)
+const char str_date[] = DATE_BUILD;
+int firmware_info (void)
 {
-	uint8_t m = 1;
-	if (strcasecmp("Jan", month) == 0) {
-		m = 1;
-	} else if (strcasecmp("Feb", month) == 0) {
-		m = 2;
-	} else if (strcasecmp("Mar", month) == 0) {
-		m = 3;
-	} else if (strcasecmp("Apr", month) == 0) {
-		m = 4;
-	} else if (strcasecmp("May", month) == 0) {
-		m = 5;
-	} else if (strcasecmp("Jun", month) == 0) {
-		m = 6;
-	} else if (strcasecmp("Jul", month) == 0) {
-		m = 7;
-	} else if (strcasecmp("Aug", month) == 0) {
-		m = 8;
-	} else if (strcasecmp("Sep", month) == 0) {
-		m = 9;
-	} else if (strcasecmp("Oct", month) == 0) {
-		m = 10;
-	} else if (strcasecmp("Nov", month) == 0) {
-		m = 11;
-	} else if (strcasecmp("Dec", month) == 0) {
-		m = 12;
+	gFUN.pin_led = PICO_DEFAULT_LED_PIN;
+
+	gFUN.build_date = str_date;
+	gFUN.build_time = TIME_BUILD;
+
+	int y = 0, m = 0, d = 0;
+	int h = 0, min = 0, s = 0;
+
+	sscanf(gFUN.build_date, "%d-%d-%d", &y, &m, &d);
+	sscanf(gFUN.build_time, "%d:%d:%d", &h, &min, &s);
+
+    gFUN.t.year = y;
+    gFUN.t.month = m;
+    gFUN.t.day = d;
+    gFUN.t.hour = h;
+    gFUN.t.min = min;
+    gFUN.t.sec = s;
+
+	pico_unique_board_id_t board_id;
+    pico_get_unique_board_id(&board_id);
+
+	sprintf(gFUN.str_boardid, "%02X%02X%02X%02X%02X%02X%02X%02X",
+		board_id.id[0], board_id.id[1], board_id.id[2], board_id.id[3],
+		board_id.id[4], board_id.id[5], board_id.id[6], board_id.id[7]);
+
+
+	return 0;
+}
+
+struct repeating_timer timer;
+
+bool repeating_timer_callback (struct repeating_timer *t)
+{
+	static int cnt = 0;
+
+    printf("%d : %lld\n", cnt, time_us_64());
+
+	++cnt;
+
+	gpio_put(gFUN.pin_led, cnt%2);
+
+/*
+	if (cnt >= 30) {
+    	bool cancelled = cancel_repeating_timer(&timer);
+    	printf("cancelled... %d\n", cancelled);
 	}
-
-	return m;
+*/
+    return true;
 }
 
-int convert_buildtime(datetime_t *t)
+int main (void)
 {
-    char str[32] = {0};
-    char month[6] = {0};
-    int y = 0, d = 0, h = 0, min = 0, s = 0;
-
-    strcpy(str, BUILD_CLOCK);
-    sscanf(str, "%s %d %d, %d:%d:%d", month, &d, &y, &h, &min, &s);
-
-    t->year = y;
-    t->month = utility_conv_month(month);
-    t->day = d;
-    t->dotw = 4;
-    t->hour = h;
-    t->min = min;
-    t->sec = s;
-
-    return 0;
-}
-
-int main() {
-    int cnt = 0;
-    const uint LED_PIN = PICO_DEFAULT_LED_PIN;
-
     stdio_init_all();
-    printf("Pico built (%s).\n", BUILD_CLOCK);
+
 
     char buf_datetime[256] = {0};
     char *str_datetime = &buf_datetime[0];
 
-    datetime_t t;
-
-    convert_buildtime(&t);
+	firmware_info();
 
     rtc_init();
-    rtc_set_datetime(&t);
+    rtc_set_datetime(&gFUN.t);
 
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
+    gpio_init(gFUN.pin_led);
+    gpio_set_dir(gFUN.pin_led, GPIO_OUT);
+
+
+	add_repeating_timer_ms(-1000, repeating_timer_callback, NULL, &timer);
+
     while (true) {
-        if (cnt++ % 10 == 2) {
-            rtc_get_datetime(&t);
-            datetime_format(str_datetime, sizeof(buf_datetime), &t);
-            printf("\rPico : %s", str_datetime);
-        }
+        if (board_button_read()) {
+			printf("BoardID : %s\n", gFUN.str_boardid);
+			printf("Pico %s built @ %s %s\n", PICO_SDK_VERSION_STRING, gFUN.build_date, gFUN.build_time);
+            rtc_get_datetime(&gFUN.t);
+            datetime_format(str_datetime, sizeof(buf_datetime), &gFUN.t);
+            printf("%s\n", str_datetime);
 
-        gpio_put(LED_PIN, 1);
-        sleep_ms(500);
-        gpio_put(LED_PIN, 0);
-        sleep_ms(500);
+			sleep_ms(10);
+        } else {
+			sleep_ms(10);
+		}
     }
+
+
     return 0;
 }
+
+
+

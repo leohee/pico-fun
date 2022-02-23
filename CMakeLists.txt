@@ -15,11 +15,12 @@ include_directories(
 
 add_executable(pico_fun
     source/main.c
+    source/button.c
 )
 
 pico_enable_stdio_usb(pico_fun 1)
 
 pico_add_extra_outputs(pico_fun)
 
-target_link_libraries(pico_fun pico_stdlib hardware_rtc)
+target_link_libraries(pico_fun pico_stdlib pico_unique_id hardware_rtc)
 
