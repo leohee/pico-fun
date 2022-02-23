@@ -67,6 +67,8 @@ int main (void)
 
 	fun_pico_init();
 
+	fun_oled_init();
+
     while (true) {
         /*if (board_button_read()) {
 			printf("BoardID : %s\n", gFUN.str_boardid);

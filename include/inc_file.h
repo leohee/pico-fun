@@ -18,6 +18,7 @@
 #include "fun_button.h"
 #include "fun_led.h"
 #include "fun_timer.h"
+#include "fun_oled.h"
 
 #include "fun_main.h"
 
