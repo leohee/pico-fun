@@ -1,12 +1,16 @@
 
-#include "pico/stdlib.h"
-#include "hardware/gpio.h"
-#include "hardware/sync.h"
-#include "hardware/structs/ioqspi.h"
-#include "hardware/structs/sio.h"
+#include "inc_file.h"
 
-
-
+// This example blinks the Pico LED when the BOOTSEL button is pressed.
+//
+// Picoboard has a button attached to the flash CS pin, which the bootrom
+// checks, and jumps straight to the USB bootcode if the button is pressed
+// (pulling flash CS low). We can check this pin in by jumping to some code in
+// SRAM (so that the XIP interface is not required), floating the flash CS
+// pin, and observing whether it is pulled low.
+//
+// This doesn't work if others are trying to access flash at the same time,
+// e.g. XIP streamer, or the other core.
 bool __no_inline_not_in_flash_func(get_bootsel_button)()
 {
     const uint CS_PIN_INDEX = 1;
@@ -40,7 +44,7 @@ bool __no_inline_not_in_flash_func(get_bootsel_button)()
 
 uint32_t board_button_read (void)
 {
-  return 1 == get_bootsel_button();
+	return (1 == get_bootsel_button());
 }
 
 

@@ -14,8 +14,10 @@ include_directories(
 )
 
 add_executable(pico_fun
-    source/main.c
-    source/button.c
+    source/fun_main.c
+    source/fun_button.c
+    source/fun_led.c
+    source/fun_timer.c
 )
 
 pico_enable_stdio_usb(pico_fun 1)

@@ -1,13 +1,5 @@
-#include <stdio.h>
-#include <string.h>
-#include "hardware/rtc.h"
-#include "pico/stdlib.h"
-#include "pico/unique_id.h"
-#include "pico/util/datetime.h"
 
-#include "build_ver.h"
-#include "common.h"
-#include "button.h"
+#include "inc_file.h"
 
 struct pico_fun_t gFUN;
 
@@ -22,8 +14,6 @@ void datetime_format(char *buf, uint buf_size, const datetime_t *t)
 const char str_date[] = DATE_BUILD;
 int firmware_info (void)
 {
-	gFUN.pin_led = PICO_DEFAULT_LED_PIN;
-
 	gFUN.build_date = str_date;
 	gFUN.build_time = TIME_BUILD;
 
@@ -51,48 +41,33 @@ int firmware_info (void)
 	return 0;
 }
 
-struct repeating_timer timer;
-
-bool repeating_timer_callback (struct repeating_timer *t)
+static int fun_pico_init (void)
 {
-	static int cnt = 0;
 
-    printf("%d : %lld\n", cnt, time_us_64());
 
-	++cnt;
+	fun_led_init();
 
-	gpio_put(gFUN.pin_led, cnt%2);
 
-/*
-	if (cnt >= 30) {
-    	bool cancelled = cancel_repeating_timer(&timer);
-    	printf("cancelled... %d\n", cancelled);
-	}
-*/
-    return true;
+	return 0;
 }
 
 int main (void)
 {
-    stdio_init_all();
-
-
     char buf_datetime[256] = {0};
     char *str_datetime = &buf_datetime[0];
+	int i_cnt = 0;
+
+    stdio_init_all();
 
 	firmware_info();
 
     rtc_init();
     rtc_set_datetime(&gFUN.t);
 
-    gpio_init(gFUN.pin_led);
-    gpio_set_dir(gFUN.pin_led, GPIO_OUT);
-
-
-	add_repeating_timer_ms(-1000, repeating_timer_callback, NULL, &timer);
+	fun_pico_init();
 
     while (true) {
-        if (board_button_read()) {
+        /*if (board_button_read()) {
 			printf("BoardID : %s\n", gFUN.str_boardid);
 			printf("Pico %s built @ %s %s\n", PICO_SDK_VERSION_STRING, gFUN.build_date, gFUN.build_time);
             rtc_get_datetime(&gFUN.t);
@@ -100,11 +75,30 @@ int main (void)
             printf("%s\n", str_datetime);
 
 			sleep_ms(10);
+
+			gFUN.led.toggle();
         } else {
 			sleep_ms(10);
-		}
-    }
+		}*/
 
+		gFUN.led.toggle();
+		sleep_ms(1000);
+
+		++i_cnt;
+
+		if (i_cnt == 10) {
+			fun_led_show(true, 10, 500, 500);
+		}
+
+		if (i_cnt == 20) {
+			fun_led_show(true, 20, 250, 250);
+		}
+
+		if (i_cnt == 30) {
+			fun_led_show(true, 10, 500, 500);
+		}
+
+    }
 
     return 0;
 }
