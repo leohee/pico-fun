@@ -8,7 +8,12 @@ struct fun_button_t {
 	bool			press_on;		/* true when hold press on */
 	bool			press_off;		/* true when hold press off */
 
-	uint			count;			/* count on-off */
+	uint			count_kick;		/* count on-off */
+	uint			count_double_kick;
+
+	uint64_t		last_us;		/* last button event timestamp */
+	bool			quick_press;	/* quick than 300ms */
+
 	struct repeating_timer tmr;
 
 };

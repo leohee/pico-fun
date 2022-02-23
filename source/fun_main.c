@@ -57,7 +57,6 @@ int main (void)
 {
     char buf_datetime[256] = {0};
     char *str_datetime = &buf_datetime[0];
-	int i_cnt = 0;
 
     stdio_init_all();
 
@@ -85,23 +84,6 @@ int main (void)
 
 		gFUN.led.toggle();
 		sleep_ms(1000);
-
-		++i_cnt;
-
-		if (i_cnt % 30 == 10 ) {
-			printf("led toggle 500ms\n");
-			fun_led_show(true, 10, 500, 500);
-		}
-
-		if (i_cnt % 30 == 20 ) {
-			printf("led toggle 250ms\n");
-			fun_led_show(true, 20, 250, 250);
-		}
-
-		if (i_cnt % 30 == 0 ) {
-			printf("led toggle 1000ms\n");
-		}
-
     }
 
     return 0;

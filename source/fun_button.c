@@ -51,6 +51,7 @@ bool board_button_read (void)
 bool fun_button_timer_cb (struct repeating_timer *t)
 {
 	struct fun_button_t *pBTN = &gFUN.btn;
+	uint64_t now_us = 0;
 
 	bool state_new = board_button_read();
 
@@ -62,10 +63,25 @@ bool fun_button_timer_cb (struct repeating_timer *t)
 		}
 
 		if (pBTN->press_on && pBTN->press_off) {
-			pBTN->count++;
+			pBTN->count_kick++;
 			pBTN->press_on = false;
 			pBTN->press_off = false;
-			printf("BTN : %d\n", pBTN->count);
+
+			now_us = time_us_64();
+
+			if (now_us - pBTN->last_us <= 300000) { // 300ms
+				pBTN->quick_press = true;
+				pBTN->count_double_kick++;
+			} else {
+				pBTN->quick_press = false;
+			}
+
+			pBTN->last_us = now_us;
+
+			if (pBTN->quick_press) {
+				fun_led_show(true, TIMES_ALWAYS, (pBTN->count_double_kick%5+1)*100, 
+					(pBTN->count_double_kick%5+1)*100);
+			}
 		}
 
 		 pBTN->last_state = state_new;
@@ -82,7 +98,10 @@ void fun_button_init (void)
 
 	pBTN->press_on = false;
 	pBTN->press_off = false;
-	pBTN->count = 0;
+	pBTN->count_kick = 0;
+	pBTN->count_double_kick = 0;
+	pBTN->last_us = time_us_64();
+	pBTN->quick_press = false;
 
 	add_repeating_timer_ms(-20, fun_button_timer_cb, NULL, &pBTN->tmr);
 
