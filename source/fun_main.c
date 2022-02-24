@@ -47,7 +47,7 @@ static int fun_pico_init (void)
 
 	fun_led_init();
 	fun_button_init();
-
+	fun_oled_init();
 
 
 	return 0;
@@ -61,29 +61,21 @@ int main (void)
     stdio_init_all();
 
 	firmware_info();
+	sleep_ms(100);
+
+	printf("\nBoardID : %s\n", gFUN.str_boardid);
+	printf("Pico %s built @ %s %s\n", PICO_SDK_VERSION_STRING, gFUN.build_date, gFUN.build_time);
 
     rtc_init();
     rtc_set_datetime(&gFUN.t);
 
 	fun_pico_init();
 
-	fun_oled_init();
-
     while (true) {
-        /*if (board_button_read()) {
-			printf("BoardID : %s\n", gFUN.str_boardid);
-			printf("Pico %s built @ %s %s\n", PICO_SDK_VERSION_STRING, gFUN.build_date, gFUN.build_time);
-            rtc_get_datetime(&gFUN.t);
-            datetime_format(str_datetime, sizeof(buf_datetime), &gFUN.t);
-            printf("%s\n", str_datetime);
-
-			sleep_ms(10);
-
-			gFUN.led.toggle();
-        } else {
-			sleep_ms(10);
-		}*/
-
+        rtc_get_datetime(&gFUN.t);
+        datetime_format(str_datetime, sizeof(buf_datetime), &gFUN.t);
+        printf("\r%s", str_datetime);
+ 
 		gFUN.led.toggle();
 		sleep_ms(1000);
     }

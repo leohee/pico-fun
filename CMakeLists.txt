@@ -21,13 +21,15 @@ add_executable(pico_fun
     source/fun_oled.c
 )
 
-pico_enable_stdio_usb(pico_fun 1)
+#pico_enable_stdio_usb(pico_fun 1)
+pico_enable_stdio_uart(pico_fun 1)
 
 pico_add_extra_outputs(pico_fun)
 
 target_link_libraries(pico_fun 
     pico_stdlib 
     pico_unique_id 
+    hardware_uart
     hardware_rtc 
     hardware_i2c)
 

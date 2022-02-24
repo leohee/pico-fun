@@ -408,6 +408,8 @@ void oled_ori_scroll (uint8_t page, uint8_t speed)
 
 	    // let's goooo!
 	    oled_send_cmd(OLED_SET_SCROLL | 0x01);
+
+		printf("scroll page %d at %d\n", page, speed);
 	}
 
 
@@ -451,6 +453,8 @@ int fun_oled_init (void)
 	calc_render_area_buflen(&frame_area2);
 
 	render(ascii, &frame_area2);
+
+	//print_buf_pages(ascii);
 
     return 0;
 }
