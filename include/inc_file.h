@@ -3,12 +3,15 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
+#include "pico/binary_info.h"
 #include "pico/stdlib.h"
 #include "pico/unique_id.h"
 #include "pico/util/datetime.h"
 
 #include "hardware/gpio.h"
+#include "hardware/i2c.h"
 #include "hardware/rtc.h"
 #include "hardware/sync.h"
 #include "hardware/structs/ioqspi.h"
@@ -21,6 +24,9 @@
 #include "fun_oled.h"
 
 #include "fun_main.h"
+
+
+
 
 
 

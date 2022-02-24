@@ -63,10 +63,6 @@ bool fun_button_timer_cb (struct repeating_timer *t)
 		}
 
 		if (pBTN->press_on && pBTN->press_off) {
-			pBTN->count_kick++;
-			pBTN->press_on = false;
-			pBTN->press_off = false;
-
 			now_us = time_us_64();
 
 			if (now_us - pBTN->last_us <= 300000) { // 300ms
@@ -82,9 +78,15 @@ bool fun_button_timer_cb (struct repeating_timer *t)
 				fun_led_show(true, TIMES_ALWAYS, (pBTN->count_double_kick%5+1)*100, 
 					(pBTN->count_double_kick%5+1)*100);
 			}
+
+			pBTN->count_kick++;
+			pBTN->press_on = false;
+			pBTN->press_off = false;
+
+			oled_ori_scroll(pBTN->count_kick%4, pBTN->count_double_kick%10);
 		}
 
-		 pBTN->last_state = state_new;
+		pBTN->last_state = state_new;
 	}
 
     return true;
