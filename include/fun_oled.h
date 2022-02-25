@@ -159,6 +159,11 @@ extern int fun_oled_init (void);
 
 extern void oled_ori_scroll (uint8_t page, uint8_t speed);
 
+extern int fun_oled_flush_area_string (
+	uint8_t start_col, uint8_t end_col, uint8_t start_page, uint8_t end_page,
+	char *str);
+
+extern void fun_oled_flush_clock (char *clock);
 
 #endif
 

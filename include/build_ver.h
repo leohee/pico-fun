@@ -2,7 +2,7 @@
 #define __BUILD_VER_H__
 
 
-#define FIRM_VER		("1.0.0")
+#define FIRM_VER		("V1.0")
 
 /* __DATE__ : "" */
 /* __TIME__ : "" */

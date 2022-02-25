@@ -17,7 +17,7 @@ add_executable(pico_fun
     source/fun_main.c
     source/fun_button.c
     source/fun_led.c
-    source/fun_timer.c
+    source/fun_tick.c
     source/fun_oled.c
 )
 

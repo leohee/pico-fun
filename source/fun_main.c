@@ -3,22 +3,20 @@
 
 struct pico_fun_t gFUN;
 
-void datetime_format(char *buf, uint buf_size, const datetime_t *t)
-{
-    snprintf(buf, buf_size,
-        "%04d-%02d-%02d %02d:%02d:%02d",
-        t->year, t->month, t->day,
-        t->hour, t->min, t->sec);
-}
+
 
 const char str_date[] = DATE_BUILD;
 int firmware_info (void)
 {
+	int y = 0, m = 0, d = 0;
+	int h = 0, min = 0, s = 0;
+
+
 	gFUN.build_date = str_date;
 	gFUN.build_time = TIME_BUILD;
 
-	int y = 0, m = 0, d = 0;
-	int h = 0, min = 0, s = 0;
+	memset(gFUN.str_build, 0x00, 32);
+	snprintf(gFUN.str_build, 32, "%s %s", gFUN.build_date, gFUN.build_time);
 
 	sscanf(gFUN.build_date, "%d-%d-%d", &y, &m, &d);
 	sscanf(gFUN.build_time, "%d:%d:%d", &h, &min, &s);
@@ -33,6 +31,7 @@ int firmware_info (void)
 	pico_unique_board_id_t board_id;
     pico_get_unique_board_id(&board_id);
 
+	memset(gFUN.str_boardid, 0x00, PICO_UNIQUE_BOARD_ID_SIZE_BYTES*2+1);
 	sprintf(gFUN.str_boardid, "%02X%02X%02X%02X%02X%02X%02X%02X",
 		board_id.id[0], board_id.id[1], board_id.id[2], board_id.id[3],
 		board_id.id[4], board_id.id[5], board_id.id[6], board_id.id[7]);
@@ -43,11 +42,10 @@ int firmware_info (void)
 
 static int fun_pico_init (void)
 {
-
-
 	fun_led_init();
 	fun_button_init();
 	fun_oled_init();
+	fun_tick_init();
 
 
 	return 0;
@@ -55,29 +53,22 @@ static int fun_pico_init (void)
 
 int main (void)
 {
-    char buf_datetime[256] = {0};
-    char *str_datetime = &buf_datetime[0];
-
     stdio_init_all();
 
 	firmware_info();
 	sleep_ms(100);
 
 	printf("\nBoardID : %s\n", gFUN.str_boardid);
-	printf("Pico %s built @ %s %s\n", PICO_SDK_VERSION_STRING, gFUN.build_date, gFUN.build_time);
+	printf("Pico %s built @ %s %s\n", PICO_SDK_VERSION_STRING, 
+		gFUN.build_date, gFUN.build_time);
 
     rtc_init();
     rtc_set_datetime(&gFUN.t);
 
 	fun_pico_init();
 
-    while (true) {
-        rtc_get_datetime(&gFUN.t);
-        datetime_format(str_datetime, sizeof(buf_datetime), &gFUN.t);
-        printf("\r%s", str_datetime);
- 
-		gFUN.led.toggle();
-		sleep_ms(1000);
+    while (1) {
+		tight_loop_contents();
     }
 
     return 0;

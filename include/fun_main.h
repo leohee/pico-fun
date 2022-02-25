@@ -5,6 +5,7 @@
 struct pico_fun_t {
 	const char		*build_date;
 	const char		*build_time;
+	char			str_build[32];
 	datetime_t		t;
 
 	uint			pin_led;
@@ -14,6 +15,8 @@ struct pico_fun_t {
 
 	struct fun_led_t	led;
 	struct fun_button_t	btn;
+
+	struct fun_tick_t	tick;
 
 };
 
