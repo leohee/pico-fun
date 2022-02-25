@@ -179,7 +179,7 @@ void oled_send_cmd (uint8_t cmd)
     i2c_write_blocking(DEV_I2C_OLED, (OLED_ADDR & OLED_WRITE_MODE), buf, 2, false);
 }
 
-void oled_send_buf (uint8_t *buf, int buflen)
+void oled_send_buf (uint8_t *buf, uint16_t len, int buflen)
 {
     // in horizontal addressing mode, the column address pointer auto-increments
     // and then wraps around to the next page, so we can send the entire frame
@@ -194,11 +194,17 @@ void oled_send_buf (uint8_t *buf, int buflen)
 	int i = 1;
     uint8_t *temp_buf = malloc(buflen + 1);
 	if (NULL != temp_buf) {
-		memset(temp_buf, 0, buflen+1);
+		memset(temp_buf, 0x00, buflen+1);
 
-	    for (i = 1; i < buflen + 1; i++) {
-	        temp_buf[i] = buf[i - 1];
-	    }
+		if (len <= buflen) {
+		    for (i = 1; i < len + 1; i++) {
+		        temp_buf[i] = buf[i - 1];
+		    }
+		} else {
+		    for (i = 1; i < buflen + 1; i++) {
+		        temp_buf[i] = buf[i - 1];
+		    }
+		}
 
 	    // Co = 0, D/C = 1 => the driver expects data to be written to RAM
 	    temp_buf[0] = 0x40;
@@ -267,7 +273,7 @@ void oled_init_param (void)
     oled_send_cmd(OLED_SET_DISP | 0x01); // turn display on
 }
 
-void render (uint8_t *buf, struct render_area *area)
+void render (uint8_t *buf, uint16_t len, struct render_area *area)
 {
     // update a portion of the display with a render area
     oled_send_cmd(OLED_SET_COL_ADDR);
@@ -278,7 +284,7 @@ void render (uint8_t *buf, struct render_area *area)
     oled_send_cmd(area->start_page);
     oled_send_cmd(area->end_page);
 
-    oled_send_buf(buf, area->buflen);
+    oled_send_buf(buf, len, area->buflen);
 }
 
 void oled_string (char *str, uint8_t *buf)
@@ -337,6 +343,7 @@ int fun_oled_flush_area_string (
 
     calc_render_area_buflen(&frame_area);
 
+
 	uint8_t *buf = malloc(len*WIDTH_FONT_8x6+1);
 	if (buf == NULL) {
 		printf("error malloc.\n");
@@ -346,7 +353,7 @@ int fun_oled_flush_area_string (
 
 	oled_string(str, buf);
 
-	render(buf, &frame_area);
+	render(buf, len*WIDTH_FONT_8x6, &frame_area);
 
 }
 
@@ -378,7 +385,7 @@ int fun_oled_init (void)
     uint8_t buf[OLED_BUF_LEN] = {0x00};
 	memset(buf, 0, OLED_BUF_LEN);
 
-    render(buf, &frame_area);
+    render(buf, OLED_BUF_LEN, &frame_area);
 
     oled_send_cmd(0xA5); // ignore RAM, all pixels on
     sleep_ms(500);
@@ -388,9 +395,12 @@ int fun_oled_init (void)
 	//fun_oled_flush_area_string(0, OLED_WIDTH-3, 0, 1, gFUN.str_boardid);
 
 	
-	fun_oled_flush_area_string(0, OLED_WIDTH-3, 0, 3, 
-		"1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ="\
-		"1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ=");
+	fun_oled_flush_area_string(0, 59, 0, 1, 
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+	fun_oled_flush_area_string(64, 123, 0, 1, 
+		"abcdefghijklmnopqrstuvwxyz");
+
 
     return 0;
 }

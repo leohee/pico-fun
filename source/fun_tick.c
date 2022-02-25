@@ -20,7 +20,7 @@ bool fun_tick_timer_cb (struct repeating_timer *t)
 	rtc_get_datetime(&gFUN.t);
 	datetime_format(pTICK->str_clock, SIZE_TIMESTAMP, &gFUN.t);
 
-//	fun_oled_flush_clock(pTICK->str_clock);
+	fun_oled_flush_clock(pTICK->str_clock);
 }
 
 
