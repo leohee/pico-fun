@@ -9,11 +9,13 @@
 void fun_screen_flush (uint8_t number)
 {
 	fun_oled_clear_screen();
+	printf("page %d\n", number);
 
 	switch (number) {
 	case PAGE_ABOUT:
 		fun_oled_flush_area_string(0, OLED_WIDTH-3, 0, 0, "Pico Board ID :");
 		fun_oled_flush_area_string(0, OLED_WIDTH-3, 1, 1, gFUN.str_boardid);
+		fun_oled_flush_area_string(0, OLED_WIDTH-3, 2, 2, "V1.0 built @");
 		fun_oled_flush_area_string(0, OLED_WIDTH-3, 3, 3, gFUN.str_build);
 		break;
 	case PAGE_HELP:

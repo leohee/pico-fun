@@ -53,6 +53,7 @@ static int fun_pico_init (void)
 
 int main (void)
 {
+	uint64_t us = 0;
 	char cur_us[21] = {0x00};
 
     stdio_init_all();
@@ -71,12 +72,11 @@ int main (void)
 
     while (1) {
 		if (PAGE_CLOCK == gFUN.scr.CurrentPageNo) {
-			snprintf(cur_us, 21, "%lld us", time_us_64());
+			us = time_us_64();
+			snprintf(cur_us, 21, "%lld.%llds", us/1000000, us%1000000);
 			fun_oled_flush_area_string(0, 125, 0, 0, cur_us);
-			sleep_ms(100);
-		} else {
-			tight_loop_contents();
 		}
+		sleep_ms(100);
     }
 
     return 0;

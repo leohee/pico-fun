@@ -64,7 +64,7 @@ bool fun_button_timer_cb (struct repeating_timer *t)
 
 		if (pBTN->press_on && pBTN->press_off) {
 			now_us = time_us_64();
-			printf("click @ %lld us\n", now_us);
+			printf("click @ %lld us.\n", now_us);
 
 			gFUN.scr.PageChange++;
 
@@ -77,7 +77,7 @@ bool fun_button_timer_cb (struct repeating_timer *t)
 			pBTN->last_us = now_us;
 
 			if (pBTN->quick_press) {
-//				printf("Double clicked.\n");
+				printf("Double clicked.\n");
 //				fun_led_show(true, TIMES_ALWAYS, (pBTN->count_double_kick%5+1)*100, 
 //					(pBTN->count_double_kick%5+1)*100);
 
@@ -92,6 +92,8 @@ bool fun_button_timer_cb (struct repeating_timer *t)
 				pBTN->quick_press = false;
 				gFUN.scr.CurrentPageNo = PAGE_ABOUT;
 			}
+
+			printf("cur %d\n", gFUN.scr.CurrentPageNo);
 
 			fun_screen_flush(gFUN.scr.CurrentPageNo);
 
