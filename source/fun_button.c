@@ -66,26 +66,38 @@ bool fun_button_timer_cb (struct repeating_timer *t)
 			now_us = time_us_64();
 			printf("click @ %lld us\n", now_us);
 
+			gFUN.scr.PageChange++;
+
 			if (now_us - pBTN->last_us <= 300000) { // 300ms
 				pBTN->quick_press = true;
 				pBTN->count_double_kick++;
-			} else {
-				pBTN->quick_press = false;
+				pBTN->count_kick--;			// think as on kick
 			}
 
 			pBTN->last_us = now_us;
 
 			if (pBTN->quick_press) {
-				printf("Double clicked.\n");
-				fun_led_show(true, TIMES_ALWAYS, (pBTN->count_double_kick%5+1)*100, 
-					(pBTN->count_double_kick%5+1)*100);
+//				printf("Double clicked.\n");
+//				fun_led_show(true, TIMES_ALWAYS, (pBTN->count_double_kick%5+1)*100, 
+//					(pBTN->count_double_kick%5+1)*100);
+
+				gFUN.scr.PageChange--;
+			} else {
+				pBTN->quick_press = false;
 			}
+
+			gFUN.scr.CurrentPageNo = gFUN.scr.PageChange%PAGE_TOTAL;
+
+			if (pBTN->quick_press) {
+				pBTN->quick_press = false;
+				gFUN.scr.CurrentPageNo = PAGE_ABOUT;
+			}
+
+			fun_screen_flush(gFUN.scr.CurrentPageNo);
 
 			pBTN->count_kick++;
 			pBTN->press_on = false;
 			pBTN->press_off = false;
-
-			oled_ori_scroll(pBTN->count_kick%4, pBTN->count_double_kick%10);
 		}
 
 		pBTN->last_state = state_new;

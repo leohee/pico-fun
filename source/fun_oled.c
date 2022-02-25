@@ -303,7 +303,7 @@ void oled_string (char *str, uint8_t *buf)
 	}
 }
 
-void oled_ori_scroll (uint8_t page, uint8_t speed)
+void oled_horiz_scroll (uint8_t page, uint8_t speed)
 {
 	if ((page < OLED_NUM_PAGES)&&(speed < 10)) {
 	    oled_send_cmd(OLED_SET_HORIZ_SCROLL | 0x00);
@@ -362,16 +362,8 @@ void fun_oled_flush_clock (char *clock)
 	fun_oled_flush_area_string(0, OLED_WIDTH-3, 3, 3, clock);
 }
 
-int fun_oled_init (void)
+void fun_oled_clear_screen (void)
 {
-    i2c_init(DEV_I2C_OLED, 400 * 1000);
-    gpio_set_function(PIN_OLED_SDA, GPIO_FUNC_I2C);
-    gpio_set_function(PIN_OLED_SCL, GPIO_FUNC_I2C);
-    gpio_pull_up(PIN_OLED_SDA);
-    gpio_pull_up(PIN_OLED_SCL);
-
-    oled_init_param();
-
     // initialize render area for entire frame (128 pixels by 4 pages)
     struct render_area frame_area = {
     	start_col: 0,
@@ -387,20 +379,23 @@ int fun_oled_init (void)
 
     render(buf, OLED_BUF_LEN, &frame_area);
 
-    oled_send_cmd(0xA5); // ignore RAM, all pixels on
-    sleep_ms(500);
-    oled_send_cmd(0xA4); // go back to following RAM
-    sleep_ms(500);
+//    oled_send_cmd(0xA5); // ignore RAM, all pixels on
+//    sleep_ms(500);
+//    oled_send_cmd(0xA4); // go back to following RAM
+//    sleep_ms(500);
+}
 
-	//fun_oled_flush_area_string(0, OLED_WIDTH-3, 0, 1, gFUN.str_boardid);
+int fun_oled_init (void)
+{
+    i2c_init(DEV_I2C_OLED, 400 * 1000);
+    gpio_set_function(PIN_OLED_SDA, GPIO_FUNC_I2C);
+    gpio_set_function(PIN_OLED_SCL, GPIO_FUNC_I2C);
+    gpio_pull_up(PIN_OLED_SDA);
+    gpio_pull_up(PIN_OLED_SCL);
 
-	
-	fun_oled_flush_area_string(0, 59, 0, 1, 
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    oled_init_param();
 
-	fun_oled_flush_area_string(64, 123, 0, 1, 
-		"abcdefghijklmnopqrstuvwxyz");
-
+    fun_oled_clear_screen();
 
     return 0;
 }

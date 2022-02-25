@@ -46,13 +46,15 @@ static int fun_pico_init (void)
 	fun_button_init();
 	fun_oled_init();
 	fun_tick_init();
-
+	fun_screen_init();
 
 	return 0;
 }
 
 int main (void)
 {
+	char cur_us[21] = {0x00};
+
     stdio_init_all();
 
 	firmware_info();
@@ -68,7 +70,13 @@ int main (void)
 	fun_pico_init();
 
     while (1) {
-		tight_loop_contents();
+		if (PAGE_CLOCK == gFUN.scr.CurrentPageNo) {
+			snprintf(cur_us, 21, "%lld us", time_us_64());
+			fun_oled_flush_area_string(0, 125, 0, 0, cur_us);
+			sleep_ms(100);
+		} else {
+			tight_loop_contents();
+		}
     }
 
     return 0;

@@ -19,6 +19,7 @@ add_executable(pico_fun
     source/fun_led.c
     source/fun_tick.c
     source/fun_oled.c
+    source/fun_screen.c
 )
 
 #pico_enable_stdio_usb(pico_fun 1)

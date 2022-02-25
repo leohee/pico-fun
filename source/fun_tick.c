@@ -15,12 +15,14 @@ bool fun_tick_timer_cb (struct repeating_timer *t)
 
 	gFUN.led.toggle();
 
-	memset(pTICK->str_clock, 0x00, SIZE_TIMESTAMP);
+	if (PAGE_CLOCK == gFUN.scr.CurrentPageNo) {
+		memset(pTICK->str_clock, 0x00, SIZE_TIMESTAMP);
 
-	rtc_get_datetime(&gFUN.t);
-	datetime_format(pTICK->str_clock, SIZE_TIMESTAMP, &gFUN.t);
+		rtc_get_datetime(&gFUN.t);
+		datetime_format(pTICK->str_clock, SIZE_TIMESTAMP, &gFUN.t);
 
-	fun_oled_flush_clock(pTICK->str_clock);
+		fun_oled_flush_clock(pTICK->str_clock);
+	}
 }
 
 

@@ -22,6 +22,7 @@
 #include "fun_led.h"
 #include "fun_tick.h"
 #include "fun_oled.h"
+#include "fun_screen.h"
 
 #include "fun_main.h"
 
