@@ -73,7 +73,7 @@ int main (void)
     while (1) {
 		if (PAGE_CLOCK == gFUN.scr.CurrentPageNo) {
 			us = time_us_64();
-			snprintf(cur_us, 21, "%lld.%llds", us/1000000, us%1000000);
+			snprintf(cur_us, 21, "%lld.%06llds", us/1000000, us%1000000);
 			fun_oled_flush_area_string(0, 125, 0, 0, cur_us);
 		}
 		sleep_ms(100);

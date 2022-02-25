@@ -15,7 +15,7 @@ struct pico_fun_t {
 
 	struct fun_led_t	led;
 	struct fun_button_t	btn;
-
+	struct fun_oled_t	oled;
 	struct fun_tick_t	tick;
 
 	struct fun_screen_t	scr;

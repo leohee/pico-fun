@@ -1,7 +1,6 @@
 #ifndef __FUN_SCREEN_H__
 #define __FUN_SCREEN_H__
 
-
 enum {
 	PAGE_ABOUT			= (0),
 	PAGE_HELP			= (1),
