@@ -50,6 +50,8 @@ static int fun_pico_init (void)
 
 	fun_nrf24_init();
 
+	fun_wdt_init();
+
 	return 0;
 }
 

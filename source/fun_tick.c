@@ -15,6 +15,8 @@ bool fun_tick_timer_cb (struct repeating_timer *t)
 
 	gFUN.led.toggle();
 
+	fun_wdt_feed();
+
 	if (PAGE_CLOCK == gFUN.scr.CurrentPageNo) {
 		memset(pTICK->str_clock, 0x00, SIZE_TIMESTAMP);
 

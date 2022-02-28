@@ -18,6 +18,7 @@
 #include "hardware/sync.h"
 #include "hardware/structs/ioqspi.h"
 #include "hardware/structs/sio.h"
+#include "hardware/watchdog.h"
 
 #include "build_ver.h"
 #include "fun_button.h"
@@ -25,6 +26,7 @@
 #include "fun_tick.h"
 #include "fun_oled.h"
 #include "fun_screen.h"
+#include "fun_wdt.h"
 
 #include "nRF24L01_regs.h"
 #include "fun_nrf24.h"
