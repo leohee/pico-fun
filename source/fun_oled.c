@@ -356,6 +356,8 @@ int fun_oled_flush_area_string (
 	uint32_t save = spin_lock_blocking(gFUN.oled.lock);
 	render(buf, len*WIDTH_FONT_8x6, &frame_area);
 	spin_unlock(gFUN.oled.lock, save);
+
+	free(buf);
 }
 
 void fun_oled_flush_clock (char *clock)

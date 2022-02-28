@@ -5,8 +5,9 @@ enum {
 	PAGE_ABOUT			= (0),
 	PAGE_HELP			= (1),
 	PAGE_CLOCK			= (2),
-	PAGE_TEST1			= (3),
-	PAGE_TEST2			= (4),
+	PAGE_NRF24			= (3),
+//	PAGE_TEST1			= (4),
+//	PAGE_TEST2			= (5),
 
 	PAGE_TOTAL
 };

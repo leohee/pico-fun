@@ -25,7 +25,12 @@ void fun_screen_flush (uint8_t number)
 	case PAGE_CLOCK:
 		fun_oled_flush_area_string(0, OLED_WIDTH-3, 1, 1, "Current clock :");
 		break;
-	case PAGE_TEST1:
+	case PAGE_NRF24:
+		fun_oled_flush_area_string(0, OLED_WIDTH-3, 0, 0, "nRF24 mode :");
+		fun_oled_flush_area_string(0, OLED_WIDTH-3, 1, 1, 
+			gFUN.nrf.mode==RX_MODE?"Rx":"Tx");
+		break;
+/*	case PAGE_TEST1:
 		fun_oled_flush_area_string(0, 59, 0, 3, AlphabetUpper);
 
 		fun_oled_flush_area_string(64, 123, 0, 3, AlphabetLower);
@@ -35,6 +40,7 @@ void fun_screen_flush (uint8_t number)
 
 		fun_oled_flush_area_string(0, OLED_WIDTH-3, 2, 3, AlphabetLower);
 		break;
+*/
 	}
 
 

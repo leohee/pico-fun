@@ -9,10 +9,12 @@
 #include "pico/stdlib.h"
 #include "pico/unique_id.h"
 #include "pico/util/datetime.h"
+#include "pico/util/queue.h"
 
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
 #include "hardware/rtc.h"
+#include "hardware/spi.h"
 #include "hardware/sync.h"
 #include "hardware/structs/ioqspi.h"
 #include "hardware/structs/sio.h"
@@ -24,11 +26,14 @@
 #include "fun_oled.h"
 #include "fun_screen.h"
 
+#include "nRF24L01_regs.h"
+#include "fun_nrf24.h"
+
 #include "fun_main.h"
 
 
 
 
-
-
 #endif /* __INC_FILE_H__ */
+
+

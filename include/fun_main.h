@@ -19,6 +19,8 @@ struct pico_fun_t {
 	struct fun_tick_t	tick;
 
 	struct fun_screen_t	scr;
+
+	struct fun_nrf24_t	nrf;
 };
 
 

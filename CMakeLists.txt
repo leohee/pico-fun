@@ -20,6 +20,7 @@ add_executable(pico_fun
     source/fun_tick.c
     source/fun_oled.c
     source/fun_screen.c
+    source/fun_nrf24.c
 )
 
 #pico_enable_stdio_usb(pico_fun 1)
@@ -30,7 +31,8 @@ pico_add_extra_outputs(pico_fun)
 target_link_libraries(pico_fun 
     pico_stdlib 
     pico_unique_id 
-    hardware_uart
+    hardware_i2c
     hardware_rtc 
-    hardware_i2c)
+    hardware_spi 
+    hardware_uart)
 
