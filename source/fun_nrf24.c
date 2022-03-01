@@ -797,7 +797,7 @@ typedef struct {
 
 static queue_t call_queue;
 
-void gpio_irq_handler (uint gpio, uint32_t events)
+static void nrf24_irq_handler (uint gpio, uint32_t events)
 {
 	printf("GPIO %d %d\n", gpio, events);
 	queue_entry_t entry = {
@@ -816,7 +816,7 @@ void fun_nrf24_config_pipe_address (uint8_t mode)
 	} else {
 		printf("Set nrf in TX mode.\n");
 		// Config PTX specific registers and Tx payloads to PRX data pipe 0
-		init_nrf24_ptx_registers(PRX_ADDR_P5); 
+		init_nrf24_ptx_registers(PRX_ADDR_P0); 
 		set_mode(TX_MODE); // Activate TX_MODE
 	}
 
@@ -843,11 +843,11 @@ int fun_nrf24_init (void)
 	debug_rx_address_pipes(RX_ADDR_P5); // printf RX_ADDR_P5 register
 	debug_rx_address_pipes(TX_ADDR); // printf TX_ADDR register
 
-	// Initialise the call_queue utilized by gpio_irq_handler
+	// Initialise the call_queue utilized by nrf24_irq_handler
 	queue_init(&call_queue, sizeof(queue_entry_t), 6);
 
 	// Enable IRQ for PIN_IRQ GPIO and set interrupt handler (irq_handler)
-	gpio_set_irq_enabled_with_callback(PIN_IRQ, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
+	gpio_set_irq_enabled_with_callback(PIN_IRQ, GPIO_IRQ_EDGE_FALL, true, &nrf24_irq_handler);
 
 
 	return 0;
@@ -872,7 +872,7 @@ void fun_nrf24_rcv_loop (void)
             printf("Rx Message - PTX ID: %d, Data Pipe: %d, Moisture: %d\n", 
             	payload_rx.ptx_id, payload_rx.data_pipe, payload_rx.moisture);
 
-			fun_led_show(true, TIMES_ONE, 20, 20);
+			//fun_led_show(true, TIMES_ONE, 20, 20);
 
 			if (PAGE_NRF24 == gFUN.scr.CurrentPageNo) {
 				char str_rcv[21] = {0};
@@ -916,7 +916,7 @@ void fun_nrf24_snd_loop (void)
 
       printf("Tx message #%d: %d%%\n", msg, payload_tx.moisture);
 
-		fun_led_show(true, TIMES_ONE, 20, 20);
+		//fun_led_show(true, TIMES_ONE, 20, 20);
 
 		if (PAGE_NRF24 == gFUN.scr.CurrentPageNo) {
 			char str_snd[21] = {0};

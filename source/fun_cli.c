@@ -291,6 +291,24 @@ static void show_version (int argc, const struct cli_parser_parsed_arg *args)
 
 }
 
+static void cli_nrf_mode (int argc, const struct cli_parser_parsed_arg *args)
+{
+	if (args) {
+		if (argc == 2) {
+			if (args[0].type == 's') {
+				gFUN.nrf.ready = false;
+				if (args[0].value.argument_s[0] == 'R') {
+					fun_nrf24_config_pipe_address(RX_MODE);
+				} else if (args[0].value.argument_s[0] == 'T') {
+					fun_nrf24_config_pipe_address(TX_MODE);
+				}
+				gFUN.nrf.ready = true;
+			}
+		}
+	}
+
+}
+
 static void cli_get_args (int argc, const struct cli_parser_parsed_arg *args)
 {
   if (args) {
@@ -316,11 +334,21 @@ void fun_cli_init (void)
 {
 	cli_parser_init();
 
+	/* command line interface. ex :
+	help
+	single_arg -t34234   
+	double_args -t88 -v92.009   
+	triple_args -t2 -v0.5531 -jmystring 
+	version
+	nrf -mR
+	*/
+
 	static struct cli_parser_cmd_option cli_options[] = {
 		{"single_arg", "get single arg from CLI", "t:", "%i", 1, cli_get_args},
 		{"double_args", "get double args from CLI", "t:v:", "%i%f", 2, cli_get_args},
 		{"triple_args", "get triple args from CLI", "t:v:j:", "%i%f%s", 3, cli_get_args},
 		{"version", "get firmware version", NULL, NULL, 0, show_version},
+		{"nrf", "set nRF24 work mode. -m[R|T]", "m:", "%s", 1, cli_nrf_mode},
 		{NULL, NULL, NULL, NULL, 0, NULL} // sentinel
 	};
 
