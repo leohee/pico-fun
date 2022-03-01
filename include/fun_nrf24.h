@@ -136,10 +136,14 @@ extern void fun_nrf24_rcv_loop (void);
 
 extern void fun_nrf24_snd_loop (void);
 
+#define PICO_SPINLOCK_ID_NRF24		(6)
+
 struct fun_nrf24_t {
-	uint8_t		mode;
+	uint8_t			mode;
 
+	uint8_t			ready;
 
+	spin_lock_t		*lock;
 };
 
 

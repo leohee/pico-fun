@@ -92,6 +92,8 @@ bool fun_button_timer_cb (struct repeating_timer *t)
 				pBTN->quick_press = false;
 				gFUN.scr.CurrentPageNo = PAGE_ABOUT;
 
+				gFUN.nrf.ready = false;
+
 				fun_nrf24_config_pipe_address(1-gFUN.nrf.mode);
 				gFUN.nrf.mode = 1 - gFUN.nrf.mode;
 			}

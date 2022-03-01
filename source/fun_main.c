@@ -52,6 +52,8 @@ static int fun_pico_init (void)
 
 	fun_wdt_init();
 
+	fun_cli_init();
+
 	return 0;
 }
 
@@ -83,12 +85,17 @@ int main (void)
 		}
 		sleep_ms(100);
 */
-
-		if (RX_MODE == gFUN.nrf.mode) {
-			fun_nrf24_rcv_loop();
-		} else {
-			fun_nrf24_snd_loop();
+/*
+		if (true == gFUN.nrf.ready) {
+			if (RX_MODE == gFUN.nrf.mode) {
+				fun_nrf24_rcv_loop();
+			} else {
+				fun_nrf24_snd_loop();
+			}
 		}
+*/
+		cli_parser_proc();
+		sleep_ms(1);
     }
 
     return 0;
