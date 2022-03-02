@@ -54,6 +54,8 @@ static int fun_pico_init (void)
 
 	fun_cli_init();
 
+	fun_esp_init();
+
 	return 0;
 }
 

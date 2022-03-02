@@ -34,6 +34,7 @@
 #include "fun_screen.h"
 #include "fun_wdt.h"
 #include "fun_cli.h"
+#include "fun_esp.h"
 
 #include "nRF24L01_regs.h"
 #include "fun_nrf24.h"
