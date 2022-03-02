@@ -103,66 +103,6 @@ const uint8_t font_8x6[][WIDTH_FONT_8x6] = {
 	{0x14, 0x14, 0x14, 0x14, 0x14, 0x14},	// horiz lines
 };
 
-static void fill (uint8_t *buf, uint8_t fill)
-{
-	int i = 0;
-
-    // fill entire buffer with the same byte
-    for (i = 0; i < OLED_BUF_LEN; i++) {
-        buf[i] = fill;
-    }
-};
-
-void fill_page (uint8_t *buf, uint8_t fill, uint8_t page)
-{
-    // fill entire page with the same byte
-    memset(buf + (page * OLED_WIDTH), fill, OLED_WIDTH);
-};
-
-// convenience methods for printing out a buffer to be rendered
-// mostly useful for debugging images, patterns, etc
-static void print_buf_page (uint8_t *buf, uint8_t page)
-{
-	int j = 0, k = 0;
-
-    // prints one page of a full length (128x4) buffer
-    for (j = 0; j < OLED_PAGE_HEIGHT; j++) {
-        for (k = 0; k < OLED_WIDTH; k++) {
-            printf("%u", (buf[page * OLED_WIDTH + k] >> j) & 0x01);
-        }
-        printf("\n");
-    }
-}
-
-void print_buf_pages (uint8_t *buf)
-{
-	int i = 0;
-
-    // prints all pages of a full length buffer
-    for (i = 0; i < OLED_NUM_PAGES; i++) {
-        printf("--page %d--\n", i);
-        print_buf_page(buf, i);
-    }
-}
-
-void print_buf_area (uint8_t *buf, struct render_area *area)
-{
-	int i = 0, j = 0, k = 0;
-
-    // print a render area of generic size
-    int area_width = area->end_col - area->start_col + 1;
-    int area_height = area->end_page - area->start_page + 1; // in pages, not pixels
-
-    for (i = 0; i < area_height; i++) {
-        for (j = 0; j < OLED_PAGE_HEIGHT; j++) {
-            for (k = 0; k < area_width; k++) {
-//                printf("%u", (buf[i * area_width + k] >> j) & 0x01);
-            }
-//            printf("\n");
-        }
-    }
-}
-
 void calc_render_area_buflen (struct render_area *area)
 {
     // calculate how long the flattened buffer will be for a render area
@@ -287,7 +227,7 @@ void render (uint8_t *buf, uint16_t len, struct render_area *area)
     oled_send_buf(buf, len, area->buflen);
 }
 
-void oled_string (char *str, uint8_t *buf)
+static void oled_string (char *str, uint8_t *buf)
 {
 	int i = 0, j = 0;
 	uint8_t ch = 0;
@@ -296,10 +236,8 @@ void oled_string (char *str, uint8_t *buf)
 		ch = str[i] - ' ';
 		for (j = 0; j < WIDTH_FONT_8x6; j++) {
 			buf[i*WIDTH_FONT_8x6+j] = font_8x6[ch][j];
-//			printf("0x%02X, ", buf[i*WIDTH_FONT_8x6+j]);
 		}
 		i++;
-//		printf("\n");
 	}
 }
 
@@ -330,7 +268,7 @@ int fun_oled_flush_area_string (
 
 	if ((end_col >= OLED_WIDTH)||(end_page >= OLED_NUM_PAGES)
 		||(start_col > end_col)||(start_page > end_page)) {
-		printf("error position : col %d %d , page %d %d.\n", 
+		LOG_ERR("error position : col %d %d , page %d %d.\n", 
 			start_col, end_col, start_page, end_page);
 		return -1;
 	}
@@ -346,7 +284,7 @@ int fun_oled_flush_area_string (
 
 	uint8_t *buf = malloc(len*WIDTH_FONT_8x6+1);
 	if (buf == NULL) {
-		printf("error malloc.\n");
+		LOG_ERR("error malloc.\n");
 		return -1;
 	}
 	memset(buf, 0x00, len*WIDTH_FONT_8x6+1);

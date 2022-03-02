@@ -76,7 +76,7 @@ bool fun_button_timer_cb (struct repeating_timer *t)
 			pBTN->last_us = now_us;
 
 			if (pBTN->quick_press) {
-				printf("Double clicked.\n");
+				LOG_INF("Double clicked.");
 
 				gFUN.scr.PageChange--;
 			} else {

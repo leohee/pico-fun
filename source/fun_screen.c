@@ -9,7 +9,7 @@
 void fun_screen_flush (uint8_t number)
 {
 	fun_oled_clear_screen();
-	printf("page %d\n", number);
+	LOG_INF("page %d", number);
 
 	switch (number) {
 	case PAGE_ABOUT:

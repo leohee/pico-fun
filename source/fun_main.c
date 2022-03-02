@@ -64,11 +64,14 @@ int main (void)
 
     stdio_init_all();
 
-	firmware_info();
-	sleep_ms(100);
+	fun_log_init();
 
-	printf("\nBoardID : %s\n", gFUN.str_boardid);
-	printf("Pico %s built @ %s %s\n", PICO_SDK_VERSION_STRING, 
+	firmware_info();
+	sleep_ms(500);
+
+	printf("\n");
+	LOG_INF("BoardID : %s", gFUN.str_boardid);
+	LOG_INF("Pico %s built @ %s %s", PICO_SDK_VERSION_STRING, 
 		gFUN.build_date, gFUN.build_time);
 
     rtc_init();

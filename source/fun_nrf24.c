@@ -743,19 +743,19 @@ void debug_registers (void)
   uint8_t value = 0;
   
   value = r_register(CONFIG);
-  printf("CONFIG: 0x%02X\n", value);
+  LOG_INF("CONFIG: 0x%02X", value);
 
   value = r_register(EN_RXADDR);
-  printf("EN_RXADDR: 0x%02X\n", value);
+  LOG_INF("EN_RXADDR: 0x%02X", value);
 
   value = r_register(SETUP_AW);
-  printf("SETUP_AW: 0x%02X\n", value);
+  LOG_INF("SETUP_AW: 0x%02X", value);
 
   value = r_register(RF_SETUP);
-  printf("RF_SETUP: 0x%02X\n", value);
+  LOG_INF("RF_SETUP: 0x%02X", value);
 
   value = r_register(EN_AA);
-  printf("EN_AA: 0x%02X\n\n", value);
+  LOG_INF("EN_AA: 0x%02X", value);
 
   return;
 }
@@ -768,25 +768,25 @@ void debug_rx_address_pipes (uint8_t reg)
   {
     case RX_ADDR_P0:
       r_register_all(RX_ADDR_P0, buffer, FIVE_BYTES);
-      printf("RX_ADDR_P0: 0x%X 0x%X 0x%X 0x%X 0x%X\n", 
+      LOG_INF("RX_ADDR_P0: 0x%02X%02X%02X%02X%02X", 
       	buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
     break;
 
     case RX_ADDR_P1:
       r_register_all(RX_ADDR_P1, buffer, FIVE_BYTES);
-      printf("RX_ADDR_P1: 0x%X 0x%X 0x%X 0x%X 0x%X\n", 
+      LOG_INF("RX_ADDR_P1: 0x%02X%02X%02X%02X%02X", 
       	buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
     break;
 
     case TX_ADDR:
       r_register_all(RX_ADDR_P1, buffer, FIVE_BYTES);
-      printf("TX_ADDR: 0x%X 0x%X 0x%X 0x%X 0x%X\n", 
+      LOG_INF("TX_ADDR: 0x%02X%02X%02X%02X%02X", 
       	buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
     break;
     
     default:
       buffer[LSB] = r_register(reg);
-      printf("RX_ADDR_P%d: 0x%X\n", reg - 10, buffer[LSB]);
+      LOG_INF("RX_ADDR_P%d: 0x%02X", reg - 10, buffer[LSB]);
     break;
   }
 }
@@ -799,7 +799,7 @@ static queue_t call_queue;
 
 static void nrf24_irq_handler (uint gpio, uint32_t events)
 {
-	printf("GPIO %d %d\n", gpio, events);
+	LOG_INF("GPIO %d %d", gpio, events);
 	queue_entry_t entry = {
 		&check_irq_bit
 	};
@@ -810,11 +810,11 @@ static void nrf24_irq_handler (uint gpio, uint32_t events)
 void fun_nrf24_config_pipe_address (uint8_t mode)
 {
 	if (RX_MODE == mode) {
-		printf("Set nrf in RX mode.\n");
+		LOG_INF("Set nrf in RX mode.");
 		init_nrf24_prx_registers(); // Config PRX specific registers
 		set_mode(RX_MODE); // Activate RX_MODE
 	} else {
-		printf("Set nrf in TX mode.\n");
+		LOG_INF("Set nrf in TX mode.");
 		// Config PTX specific registers and Tx payloads to PRX data pipe 0
 		init_nrf24_ptx_registers(PRX_ADDR_P0); 
 		set_mode(TX_MODE); // Activate TX_MODE
@@ -834,14 +834,14 @@ int fun_nrf24_init (void)
 
 	fun_nrf24_config_pipe_address(gFUN.nrf.mode);
 
-	debug_registers(); // printf register values
-	debug_rx_address_pipes(RX_ADDR_P0); // printf RX_ADDR_P0 register
-	debug_rx_address_pipes(RX_ADDR_P1); // printf RX_ADDR_P1 register
-	debug_rx_address_pipes(RX_ADDR_P2); // printf RX_ADDR_P2 register
-	debug_rx_address_pipes(RX_ADDR_P3); // printf RX_ADDR_P3 register
-	debug_rx_address_pipes(RX_ADDR_P4); // printf RX_ADDR_P4 register
-	debug_rx_address_pipes(RX_ADDR_P5); // printf RX_ADDR_P5 register
-	debug_rx_address_pipes(TX_ADDR); // printf TX_ADDR register
+	debug_registers();
+	debug_rx_address_pipes(RX_ADDR_P0);
+	debug_rx_address_pipes(RX_ADDR_P1);
+	debug_rx_address_pipes(RX_ADDR_P2);
+	debug_rx_address_pipes(RX_ADDR_P3);
+	debug_rx_address_pipes(RX_ADDR_P4);
+	debug_rx_address_pipes(RX_ADDR_P5);
+	debug_rx_address_pipes(TX_ADDR);
 
 	// Initialise the call_queue utilized by nrf24_irq_handler
 	queue_init(&call_queue, sizeof(queue_entry_t), 6);
@@ -862,14 +862,14 @@ void fun_nrf24_rcv_loop (void)
       uint8_t (*func)() = (uint8_t(*)())(entry.func);
       uint8_t irq_bit = (*func)();
 		payload_prx_t payload_rx;
-      // printf("irq_bit: %d\n", irq_bit);
+      // LOG_INF("irq_bit: %d", irq_bit);
 
       switch (irq_bit) {      
         case RX_DR_ASSERTED:
           do {
             rx_message(&payload_rx);
 
-            printf("Rx Message - PTX ID: %d, Data Pipe: %d, Moisture: %d\n", 
+            LOG_INF("Rx Message - PTX ID: %d, Data Pipe: %d, Moisture: %d", 
             	payload_rx.ptx_id, payload_rx.data_pipe, payload_rx.moisture);
 
 			//fun_led_show(true, TIMES_ONE, 20, 20);
@@ -909,12 +909,12 @@ void fun_nrf24_snd_loop (void)
   		// Tx payload format; PTX id, PRX data pipe, soil moisture %
   		payload_t payload_tx = { PTX_0, 0 };
       // Read moisture value into payload
-      payload_tx.moisture = msg;//read_moisture();
+      payload_tx.moisture = msg;
 
       // Transmit the payload to the PRX
       tx_message(&payload_tx);
 
-      printf("Tx message #%d: %d%%\n", msg, payload_tx.moisture);
+      LOG_INF("Tx message : %02X %02X", msg, payload_tx.moisture);
 
 		//fun_led_show(true, TIMES_ONE, 20, 20);
 
@@ -941,17 +941,17 @@ void fun_nrf24_snd_loop (void)
         break;
         
         case TX_DS_ASSERTED:
-          printf("Auto-acknowledge received\n");
+          LOG_INF("Auto-acknowledge received");
           sleep_ms(5000);	// 5s period
           send_msg = true;
         break;
 
         case MAX_RT_ASSERTED:
-          printf("Max retries reached\n");
+          LOG_INF("Max retries reached");
         break;
 
         default:
-          printf("irq_bit: %d\n", irq_bit);
+          LOG_INF("irq_bit: %d", irq_bit);
         break;
       }
     }

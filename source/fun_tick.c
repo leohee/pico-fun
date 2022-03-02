@@ -5,8 +5,7 @@ static void datetime_format (char *buf, uint buf_size, const datetime_t *t)
 {
     snprintf(buf, buf_size,
         "%04d-%02d-%02d %02d:%02d:%02d",
-        t->year, t->month, t->day,
-        t->hour, t->min, t->sec);
+        t->year, t->month, t->day, t->hour, t->min, t->sec);
 }
 
 bool fun_tick_timer_cb (struct repeating_timer *t)

@@ -15,6 +15,7 @@ include_directories(
 
 add_executable(pico_fun
     source/fun_main.c
+    source/fun_log.c
     source/fun_button.c
     source/fun_led.c
     source/fun_tick.c

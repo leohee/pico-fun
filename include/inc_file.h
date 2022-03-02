@@ -2,6 +2,7 @@
 #define __INC_FILE_H__
 
 #include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -25,6 +26,7 @@
 
 
 #include "build_ver.h"
+#include "fun_log.h"
 #include "fun_button.h"
 #include "fun_led.h"
 #include "fun_tick.h"

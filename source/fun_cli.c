@@ -38,7 +38,7 @@ static void help_callback (int argc, const struct cli_parser_parsed_arg *args)
 {
 	for (int i = 0; i < CLI_COMMANDS_MAX; i++) {
 		if (cmd_option_list[i].name != NULL) {
-			printf("[%s] [%i] [%s] [%s] [%s]\n", 
+			LOG_INF("[%s] [%i] [%s] [%s] [%s]", 
 				cmd_option_list[i].name,
 				cmd_option_list[i].argc,
 				(cmd_option_list[i].optstring != NULL) ? cmd_option_list[i].optstring : "noargs",
@@ -77,9 +77,7 @@ static uint16_t cli_tokenize_args (uint8_t *str, uint8_t **tokens)
     str++;
   }
 
-#if defined(DEBUG)
-  printf("nargs[%i]\n", nargs);
-#endif
+  LOG_INF("nargs[%i]", nargs);
 
   return nargs;
 }
@@ -96,17 +94,13 @@ static uint16_t cli_tokenize_options (uint8_t *str, uint8_t **tokens)
   while (*str != '\0') {
     char delimiter = *(str - 1);
     if (ASCII_IS_FMT_CHAR(*str) && delimiter == '%') {
-#if defined(DEBUG)
-      printf("fmt[%c%c]\n", delimiter, *str);
-#endif
+      LOG_INF("fmt[%c%c]", delimiter, *str);
       tokens[nopts++] = str;
     }
     str++;
   }
 
-#if defined(DEBUG)
-  printf("nopts[%i]\n", nopts);
-#endif
+  LOG_INF("nopts[%i]", nopts);
 
   return nopts;
 }
@@ -119,9 +113,7 @@ static char cli_parse_option_type (int opt, const char *optypes, int argc, int o
   if (optc == argc) {
     char opt = *opts[optind];
 
-#if defined(DEBUG)
-    printf("opt[%c] optind[%i]\n", opt, optind);
-#endif
+    LOG_INF("opt[%c] optind[%i]", opt, optind);
 
     return opt;
   }
@@ -144,27 +136,22 @@ static void cli_arg_parse (uint8_t *str)
         int parsed_arg_idx = 0;
         struct cli_parser_parsed_arg cmd_parsed_arg_list[CLI_TOKENS_MAX];
         while (1) {
-#if defined(DEBUG)
-          printf("getopt argc[%i] optstring[%s]\n", argc, cmd_option.optstring);
-#endif
+          LOG_INF("getopt argc[%i] optstring[%s]", argc, cmd_option.optstring);
+
           int opt;
           opt = getopt(argc, argv, cmd_option.optstring);
           if (opt == -1 || opt == '?') {
-#if defined(DEBUG)
-            printf("getopt opt[%s]\n", opt == -1 ? "-1" : "?");
-#endif
+            LOG_INF("getopt opt[%s]", opt == -1 ? "-1" : "?");
             break;
           }
 
-#if defined(DEBUG)
-          printf("opttypes [%s] idx[%i]\n", cmd_option.optypes, parsed_arg_idx);
-#endif
+          LOG_INF("opttypes [%s] idx[%i]", cmd_option.optypes, parsed_arg_idx);
+
           char opttype = cli_parse_option_type(opt, cmd_option.optypes,
                                                cmd_option.argc, parsed_arg_idx);
           if (opttype != -1) {
-#if defined(DEBUG)
-            printf("found matching opt[%c] optind[%i] type[%c] optarg[%s]\n", opt, optind, opttype, optarg);
-#endif
+            LOG_INF("found matching opt[%c] optind[%i] type[%c] optarg[%s]", 
+				opt, optind, opttype, optarg);
             // decode and store argument
             switch (opttype) {
             case 's':
@@ -199,11 +186,11 @@ static void cli_arg_parse (uint8_t *str)
         }
         return;
       }
-      printf("invalid number of arguments\n");
+      LOG_WRN("invalid number of arguments.");
       return;
     }
   }
-  printf("command %s not found\n", argv[0]);
+  LOG_WRN("command %s not found.", argv[0]);
 }
 
 static void cli_parser_init (void)
@@ -255,7 +242,7 @@ void cli_parser_proc (void)
       putchar_raw(ASCII_FF); // clear terminal
 #endif
 
-      printf("cli> %s\n", &cli_rx_buffer[0]);
+      printf("cli $ %s\n", &cli_rx_buffer[0]);
       cli_arg_parse(&cli_rx_buffer[0]);
 
       cli_clear_buffer();
@@ -285,8 +272,8 @@ static void cli_parser_register_commands (const struct cli_parser_cmd_option *op
 
 static void show_version (int argc, const struct cli_parser_parsed_arg *args)
 {
-	printf("BoardID : %s\n", gFUN.str_boardid);
-	printf("Pico %s built @ %s %s\n", PICO_SDK_VERSION_STRING, 
+	LOG_INF("BoardID : %s", gFUN.str_boardid);
+	LOG_INF("Pico %s built @ %s %s", PICO_SDK_VERSION_STRING, 
 		gFUN.build_date, gFUN.build_time);
 
 }
@@ -315,15 +302,16 @@ static void cli_get_args (int argc, const struct cli_parser_parsed_arg *args)
     for (int i = 0; i < (argc - 1); i++) {
       switch (args[i].type) {
       case 's':
-        printf("[%s] parsed arg [%s]\n", __func__, args[i].value.argument_s);
+        LOG_INF("[%s] parsed arg [%s]", __func__, args[i].value.argument_s);
         break;
       case 'i':
-        printf("[%s] parsed arg [%i]\n", __func__, args[i].value.argument_i);
+        LOG_INF("[%s] parsed arg [%i]", __func__, args[i].value.argument_i);
         break;
       case 'f':
-        printf("[%s] parsed arg [%f]\n", __func__, args[i].value.argument_f);
+        LOG_INF("[%s] parsed arg [%f]", __func__, args[i].value.argument_f);
         break;
       default:
+	  	LOG_WRN("not support type : %c", args[i].type);
         break;
       }
     }

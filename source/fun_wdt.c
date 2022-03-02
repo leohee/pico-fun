@@ -18,9 +18,7 @@ void fun_wdt_init (void)
 	pWDT->period = 2000;
 
     if (watchdog_caused_reboot()) {
-        printf("====Rebooted by Watchdog!====\n");
-    } else {
-        printf("Clean boot\n");
+        LOG_INF("====Rebooted by Watchdog!====");
     }
 
 	if (pWDT->enable) {
