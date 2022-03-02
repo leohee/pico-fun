@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "pico/binary_info.h"
+#include "pico/mutex.h"
 #include "pico/stdlib.h"
 #include "pico/unique_id.h"
 #include "pico/util/datetime.h"

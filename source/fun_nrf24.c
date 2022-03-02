@@ -85,12 +85,12 @@ static void w_register (uint8_t reg, uint8_t buffer)
 {
 	reg = W_REGISTER | (REGISTER_MASK & reg);
 
-	uint32_t save = spin_lock_blocking(gFUN.nrf.lock);
+	mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
 	csn_put(LOW);
 	spi_write_blocking(SPI_PORT, &reg, ONE_BYTE);
 	spi_write_blocking(SPI_PORT, &buffer, ONE_BYTE);
 	csn_put(HIGH);
-	spin_unlock(gFUN.nrf.lock, save);
+	mutex_exit(&gFUN.nrf.mutex_nrf);
 }
 
 /**
@@ -109,13 +109,13 @@ static void w_register (uint8_t reg, uint8_t buffer)
  */
 static void w_address (uint8_t reg, uint8_t *buffer, uint8_t bytes)
 {
-	uint32_t save = spin_lock_blocking(gFUN.nrf.lock);
+	mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
 	csn_put(LOW);
 	reg = W_REGISTER | (REGISTER_MASK & reg);
 	spi_write_blocking(SPI_PORT, &reg, ONE_BYTE);
 	spi_write_blocking(SPI_PORT, buffer, bytes);
 	csn_put(HIGH);
-	spin_unlock(gFUN.nrf.lock, save);
+	mutex_exit(&gFUN.nrf.mutex_nrf);
 }
 
 /**
@@ -141,12 +141,12 @@ static uint8_t r_register (uint8_t reg)
 
 	reg = (REGISTER_MASK & reg);
 
-	uint32_t save = spin_lock_blocking(gFUN.nrf.lock);
+	mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
 	csn_put(LOW);
 	spi_write_blocking(SPI_PORT, &reg, ONE_BYTE);
 	spi_read_blocking(SPI_PORT, NOP, &buffer, ONE_BYTE);
 	csn_put(HIGH);
-	spin_unlock(gFUN.nrf.lock, save);
+	mutex_exit(&gFUN.nrf.mutex_nrf);
 
 	// Return byte read from register
 	return buffer;
@@ -170,12 +170,12 @@ static void r_register_all (uint8_t reg, uint8_t *buffer, uint8_t bytes)
 {
 	reg = (REGISTER_MASK & reg);
 
-	uint32_t save = spin_lock_blocking(gFUN.nrf.lock);
+	mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
 	csn_put(LOW);
 	spi_write_blocking(SPI_PORT, &reg, ONE_BYTE);
 	spi_read_blocking(SPI_PORT, NOP, buffer, bytes);
 	csn_put(HIGH);
-	spin_unlock(gFUN.nrf.lock, save);
+	mutex_exit(&gFUN.nrf.mutex_nrf);
 }
 
 /**
@@ -189,11 +189,11 @@ static void r_register_all (uint8_t reg, uint8_t *buffer, uint8_t bytes)
 static void flush_buffer (uint8_t buffer)
 {
 	if ((buffer == FLUSH_TX) || (buffer == FLUSH_RX)) {
-		uint32_t save = spin_lock_blocking(gFUN.nrf.lock);
+		mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
 		csn_put(LOW);
 		spi_write_blocking(SPI_PORT, &buffer, ONE_BYTE);
 		csn_put(HIGH);
-		spin_unlock(gFUN.nrf.lock, save);
+		mutex_exit(&gFUN.nrf.mutex_nrf);
 	}
 }
 
@@ -623,12 +623,12 @@ void tx_message (payload_t* msg)
   // Store payload_t msg data in payload_t payload in spi_payload_t message union
   message.payload = (*msg);
 
-	uint32_t save = spin_lock_blocking(gFUN.nrf.lock);
+	mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
   csn_put(LOW);
   spi_write_blocking(SPI_PORT, &cmd, ONE_BYTE);
   spi_write_blocking(SPI_PORT, message.buffer, sizeof(message));
   csn_put(HIGH);
-  spin_unlock(gFUN.nrf.lock, save);
+  mutex_exit(&gFUN.nrf.mutex_nrf);
 
   ce_put(HIGH);
   sleep_us(100);
@@ -646,7 +646,7 @@ void tx_message (payload_t* msg)
  * 
  * @param msg
  */
-void rx_message (payload_prx_t* msg)
+void rx_message (payload_prx_t *pMSG)
 {
   // Union allows access to payload_t data as an array
   spi_payload_t message;
@@ -654,21 +654,20 @@ void rx_message (payload_prx_t* msg)
   // Must read STATUS before reading payload from RX FIFO
   uint8_t status = r_register(STATUS);
 
-  uint32_t save = spin_lock_blocking(gFUN.nrf.lock);
+  mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
   csn_put(LOW);
   // R_RX_PAYLOAD instruction
   uint8_t cmd = R_RX_PAYLOAD;
   spi_write_blocking(SPI_PORT, &cmd, ONE_BYTE);
   spi_read_blocking(SPI_PORT, NOP, message.buffer, sizeof(message));
   csn_put(HIGH);
-  spin_unlock(gFUN.nrf.lock, save);
+  mutex_exit(&gFUN.nrf.mutex_nrf);
 
-  // Store ptx_id and moisture from PTX payload in payload_prx_t* msg
-  (*msg).ptx_id = message.payload.ptx_id;
-  (*msg).moisture = message.payload.moisture;
+  pMSG->ptx_id = message.payload.ptx_id;
+  pMSG->value = message.payload.value;
 
   // Store data pipe number (STATUS register bit 1:3) in payload_prx_t* msg
-  (*msg).data_pipe = (status >> 1) & PIPE_MASK;
+  pMSG->data_pipe = (status >> 1) & PIPE_MASK;
 
     // Reset RX_DR (bit 6) in STATUS register by writing 1
     w_register(STATUS, (1 << RX_DR));
@@ -791,11 +790,6 @@ void debug_rx_address_pipes (uint8_t reg)
   }
 }
 
-typedef struct {
-	void *func;
-} queue_entry_t;
-
-static queue_t call_queue;
 
 static void nrf24_irq_handler (uint gpio, uint32_t events)
 {
@@ -804,7 +798,7 @@ static void nrf24_irq_handler (uint gpio, uint32_t events)
 		&check_irq_bit
 	};
 
-	queue_add_blocking(&call_queue, &entry);
+	queue_add_blocking(&gFUN.nrf.irq_queue, &entry);
 }
 
 void fun_nrf24_config_pipe_address (uint8_t mode)
@@ -825,14 +819,16 @@ void fun_nrf24_config_pipe_address (uint8_t mode)
 
 int fun_nrf24_init (void)
 {
+	struct fun_nrf24_t *pNRF = &gFUN.nrf;
+
 	init_spi(); // Initialise SPI and GPIO pins
 	init_nrf24(); // Initial config when device first powered
 
-	gFUN.nrf.mode = RX_MODE;
-	gFUN.nrf.ready = false;
-	gFUN.nrf.lock = spin_lock_init(PICO_SPINLOCK_ID_NRF24);
+	pNRF->mode = RX_MODE;
+	pNRF->ready = false;
+	mutex_init(&pNRF->mutex_nrf);
 
-	fun_nrf24_config_pipe_address(gFUN.nrf.mode);
+	fun_nrf24_config_pipe_address(pNRF->mode);
 
 	debug_registers();
 	debug_rx_address_pipes(RX_ADDR_P0);
@@ -844,7 +840,7 @@ int fun_nrf24_init (void)
 	debug_rx_address_pipes(TX_ADDR);
 
 	// Initialise the call_queue utilized by nrf24_irq_handler
-	queue_init(&call_queue, sizeof(queue_entry_t), 6);
+	queue_init(&gFUN.nrf.irq_queue, sizeof(queue_entry_t), 6);
 
 	// Enable IRQ for PIN_IRQ GPIO and set interrupt handler (irq_handler)
 	gpio_set_irq_enabled_with_callback(PIN_IRQ, GPIO_IRQ_EDGE_FALL, true, &nrf24_irq_handler);
@@ -855,9 +851,9 @@ int fun_nrf24_init (void)
 
 void fun_nrf24_rcv_loop (void)
 {
-    if (!queue_is_empty(&call_queue)) {
+    if (!queue_is_empty(&gFUN.nrf.irq_queue)) {
       queue_entry_t entry;
-      queue_remove_blocking(&call_queue, &entry);
+      queue_remove_blocking(&gFUN.nrf.irq_queue, &entry);
 
       uint8_t (*func)() = (uint8_t(*)())(entry.func);
       uint8_t irq_bit = (*func)();
@@ -869,15 +865,15 @@ void fun_nrf24_rcv_loop (void)
           do {
             rx_message(&payload_rx);
 
-            LOG_INF("Rx Message - PTX ID: %d, Data Pipe: %d, Moisture: %d", 
-            	payload_rx.ptx_id, payload_rx.data_pipe, payload_rx.moisture);
+            LOG_INF("Rx Message - PTX ID: %02X, Data Pipe: %02X, value: %02X", 
+            	payload_rx.ptx_id, payload_rx.data_pipe, payload_rx.value);
 
 			//fun_led_show(true, TIMES_ONE, 20, 20);
 
 			if (PAGE_NRF24 == gFUN.scr.CurrentPageNo) {
 				char str_rcv[21] = {0};
 				snprintf(str_rcv, 21, "P%02X - %02X %02X", 
-					payload_rx.data_pipe, payload_rx.ptx_id, payload_rx.moisture);
+					payload_rx.data_pipe, payload_rx.ptx_id, payload_rx.value);
 				fun_oled_flush_area_string(0, OLED_WIDTH-3, 3, 3, str_rcv);
 			}
           } while (!check_fifo_status(RX_EMPTY));
@@ -904,33 +900,32 @@ void fun_nrf24_snd_loop (void)
 	static uint8_t msg = 1;
 
     if (send_msg) {
-      send_msg = false; // Reset send message flag
+		send_msg = false; // Reset send message flag
 
-  		// Tx payload format; PTX id, PRX data pipe, soil moisture %
-  		payload_t payload_tx = { PTX_0, 0 };
-      // Read moisture value into payload
-      payload_tx.moisture = msg;
+  		payload_t payload_tx;
+		payload_tx.ptx_id = PTX_0;
+		payload_tx.value = msg;
 
       // Transmit the payload to the PRX
       tx_message(&payload_tx);
 
-      LOG_INF("Tx message : %02X %02X", msg, payload_tx.moisture);
+      LOG_INF("Tx message : %02X %02X", payload_tx.ptx_id, msg);
 
 		//fun_led_show(true, TIMES_ONE, 20, 20);
 
 		if (PAGE_NRF24 == gFUN.scr.CurrentPageNo) {
 			char str_snd[21] = {0};
 			snprintf(str_snd, 21, "%02X %02X", 
-					payload_tx.ptx_id, payload_tx.moisture);
+					payload_tx.ptx_id, payload_tx.value);
 			fun_oled_flush_area_string(0, OLED_WIDTH-3, 2, 2, str_snd);
 		}
       // Tranmission count for debugging
       msg++;
     }
 
-    if (!queue_is_empty(&call_queue)) {
+    if (!queue_is_empty(&gFUN.nrf.irq_queue)) {
       queue_entry_t entry;
-      queue_remove_blocking(&call_queue, &entry);
+      queue_remove_blocking(&gFUN.nrf.irq_queue, &entry);
 
       uint8_t (*func)() = (uint8_t(*)())(entry.func);
       uint8_t irq_bit = (*func)();

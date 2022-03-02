@@ -64,7 +64,7 @@ typedef enum {
  */
 typedef struct { 
 	ptx_id_t ptx_id;
-	uint8_t moisture : 8;
+	uint8_t value : 8;
 } payload_t;
 
 
@@ -76,7 +76,7 @@ typedef struct {
 typedef struct {
 	ptx_id_t ptx_id : 8;
 	uint8_t data_pipe : 8;
-	uint8_t moisture : 8;
+	uint8_t value : 8;
 } payload_prx_t;
 
 /**
@@ -136,14 +136,20 @@ extern void fun_nrf24_rcv_loop (void);
 
 extern void fun_nrf24_snd_loop (void);
 
-#define PICO_SPINLOCK_ID_NRF24		(6)
+//#define PICO_SPINLOCK_ID_NRF24		(6)
+
+typedef struct {
+	void *func;
+} queue_entry_t;
 
 struct fun_nrf24_t {
 	uint8_t			mode;
 
 	uint8_t			ready;
 
-	spin_lock_t		*lock;
+	queue_t			irq_queue;
+
+	struct mutex	mutex_nrf;
 };
 
 

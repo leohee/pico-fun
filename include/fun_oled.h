@@ -54,12 +54,12 @@ struct render_area {
     int buflen;
 };
 
-#define PICO_SPINLOCK_ID_OLED		(5)
+//#define PICO_SPINLOCK_ID_OLED		(5)
 
 struct fun_oled_t {
 	
-	spin_lock_t		*lock;
 
+	struct mutex	mutex_oled;
 };
 
 

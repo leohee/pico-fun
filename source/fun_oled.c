@@ -291,9 +291,9 @@ int fun_oled_flush_area_string (
 
 	oled_string(str, buf);
 
-	uint32_t save = spin_lock_blocking(gFUN.oled.lock);
+	mutex_enter_blocking(&gFUN.oled.mutex_oled);
 	render(buf, len*WIDTH_FONT_8x6, &frame_area);
-	spin_unlock(gFUN.oled.lock, save);
+	mutex_exit(&gFUN.oled.mutex_oled);
 
 	free(buf);
 }
@@ -318,11 +318,9 @@ void fun_oled_clear_screen (void)
     uint8_t buf[OLED_BUF_LEN] = {0x00};
 	memset(buf, 0, OLED_BUF_LEN);
 
-	uint32_t save = spin_lock_blocking(gFUN.oled.lock);
-
+	mutex_enter_blocking(&gFUN.oled.mutex_oled);
     render(buf, OLED_BUF_LEN, &frame_area);
-
-	spin_unlock(gFUN.oled.lock, save);
+	mutex_exit(&gFUN.oled.mutex_oled);
 
 //    oled_send_cmd(0xA5); // ignore RAM, all pixels on
 //    sleep_ms(500);
@@ -334,7 +332,7 @@ int fun_oled_init (void)
 {
 	struct fun_oled_t *pOLED = &gFUN.oled;
 
-	pOLED->lock = spin_lock_init(PICO_SPINLOCK_ID_OLED);
+	mutex_init(&pOLED->mutex_oled);
 
     i2c_init(DEV_I2C_OLED, 400 * 1000);
     gpio_set_function(PIN_OLED_SDA, GPIO_FUNC_I2C);
