@@ -3,6 +3,7 @@
 
 struct fun_wdt_t {
 	bool			enable;
+	bool			quire_reboot;
 	uint			period;
 };
 

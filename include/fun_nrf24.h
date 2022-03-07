@@ -136,7 +136,7 @@ extern void fun_nrf24_rcv_loop (void);
 
 extern void fun_nrf24_snd_loop (void);
 
-//#define PICO_SPINLOCK_ID_NRF24		(6)
+#define PICO_SPINLOCK_ID_NRF24		(6)
 
 typedef struct {
 	void *func;
@@ -148,6 +148,8 @@ struct fun_nrf24_t {
 	uint8_t			ready;
 
 	queue_t			irq_queue;
+
+    spin_lock_t 	*spin_lock;
 
 	struct mutex	mutex_nrf;
 };

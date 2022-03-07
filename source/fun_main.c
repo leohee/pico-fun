@@ -82,24 +82,7 @@ int main (void)
 	fun_pico_init();
 
     while (1) {
-/*
-		if (PAGE_CLOCK == gFUN.scr.CurrentPageNo) {
-			us = time_us_64();
-			snprintf(cur_us, 21, "%lld.%06llds", us/1000000, us%1000000);
-			fun_oled_flush_area_string(0, 125, 0, 0, cur_us);
-		}
-		sleep_ms(100);
-*/
-/*
-		if (true == gFUN.nrf.ready) {
-			if (RX_MODE == gFUN.nrf.mode) {
-				fun_nrf24_rcv_loop();
-			} else {
-				fun_nrf24_snd_loop();
-			}
-		}
-*/
-		cli_parser_proc();
+		cli_catch_input();
 		sleep_ms(1);
     }
 

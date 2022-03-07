@@ -21,6 +21,7 @@ struct pico_fun_t {
 	struct fun_screen_t	scr;
 
 	struct fun_nrf24_t	nrf;
+	struct fun_cli_t	cli;
 
 	struct fun_wdt_t	wdt;
 };

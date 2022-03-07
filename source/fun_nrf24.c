@@ -85,12 +85,14 @@ static void w_register (uint8_t reg, uint8_t buffer)
 {
 	reg = W_REGISTER | (REGISTER_MASK & reg);
 
-	mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+    uint32_t save = spin_lock_blocking(gFUN.nrf.spin_lock);
+	//mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
 	csn_put(LOW);
 	spi_write_blocking(SPI_PORT, &reg, ONE_BYTE);
 	spi_write_blocking(SPI_PORT, &buffer, ONE_BYTE);
 	csn_put(HIGH);
-	mutex_exit(&gFUN.nrf.mutex_nrf);
+	//mutex_exit(&gFUN.nrf.mutex_nrf);
+	spin_unlock(gFUN.nrf.spin_lock, save);
 }
 
 /**
@@ -109,13 +111,15 @@ static void w_register (uint8_t reg, uint8_t buffer)
  */
 static void w_address (uint8_t reg, uint8_t *buffer, uint8_t bytes)
 {
-	mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+	//mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+	uint32_t save = spin_lock_blocking(gFUN.nrf.spin_lock);
 	csn_put(LOW);
 	reg = W_REGISTER | (REGISTER_MASK & reg);
 	spi_write_blocking(SPI_PORT, &reg, ONE_BYTE);
 	spi_write_blocking(SPI_PORT, buffer, bytes);
 	csn_put(HIGH);
-	mutex_exit(&gFUN.nrf.mutex_nrf);
+	//mutex_exit(&gFUN.nrf.mutex_nrf);
+	spin_unlock(gFUN.nrf.spin_lock, save);
 }
 
 /**
@@ -141,12 +145,14 @@ static uint8_t r_register (uint8_t reg)
 
 	reg = (REGISTER_MASK & reg);
 
-	mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+	//mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+	uint32_t save = spin_lock_blocking(gFUN.nrf.spin_lock);
 	csn_put(LOW);
 	spi_write_blocking(SPI_PORT, &reg, ONE_BYTE);
 	spi_read_blocking(SPI_PORT, NOP, &buffer, ONE_BYTE);
 	csn_put(HIGH);
-	mutex_exit(&gFUN.nrf.mutex_nrf);
+	//mutex_exit(&gFUN.nrf.mutex_nrf);
+	spin_unlock(gFUN.nrf.spin_lock, save);
 
 	// Return byte read from register
 	return buffer;
@@ -170,12 +176,14 @@ static void r_register_all (uint8_t reg, uint8_t *buffer, uint8_t bytes)
 {
 	reg = (REGISTER_MASK & reg);
 
-	mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+	//mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+	uint32_t save = spin_lock_blocking(gFUN.nrf.spin_lock);
 	csn_put(LOW);
 	spi_write_blocking(SPI_PORT, &reg, ONE_BYTE);
 	spi_read_blocking(SPI_PORT, NOP, buffer, bytes);
 	csn_put(HIGH);
-	mutex_exit(&gFUN.nrf.mutex_nrf);
+	//mutex_exit(&gFUN.nrf.mutex_nrf);
+	spin_unlock(gFUN.nrf.spin_lock, save);
 }
 
 /**
@@ -189,11 +197,13 @@ static void r_register_all (uint8_t reg, uint8_t *buffer, uint8_t bytes)
 static void flush_buffer (uint8_t buffer)
 {
 	if ((buffer == FLUSH_TX) || (buffer == FLUSH_RX)) {
-		mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+		//mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+		uint32_t save = spin_lock_blocking(gFUN.nrf.spin_lock);
 		csn_put(LOW);
 		spi_write_blocking(SPI_PORT, &buffer, ONE_BYTE);
 		csn_put(HIGH);
-		mutex_exit(&gFUN.nrf.mutex_nrf);
+		//mutex_exit(&gFUN.nrf.mutex_nrf);
+		spin_unlock(gFUN.nrf.spin_lock, save);
 	}
 }
 
@@ -623,12 +633,14 @@ void tx_message (payload_t* msg)
   // Store payload_t msg data in payload_t payload in spi_payload_t message union
   message.payload = (*msg);
 
-	mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+	//mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+	uint32_t save = spin_lock_blocking(gFUN.nrf.spin_lock);
   csn_put(LOW);
   spi_write_blocking(SPI_PORT, &cmd, ONE_BYTE);
   spi_write_blocking(SPI_PORT, message.buffer, sizeof(message));
   csn_put(HIGH);
-  mutex_exit(&gFUN.nrf.mutex_nrf);
+  //mutex_exit(&gFUN.nrf.mutex_nrf);
+  spin_unlock(gFUN.nrf.spin_lock, save);
 
   ce_put(HIGH);
   sleep_us(100);
@@ -654,14 +666,16 @@ void rx_message (payload_prx_t *pMSG)
   // Must read STATUS before reading payload from RX FIFO
   uint8_t status = r_register(STATUS);
 
-  mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+  //mutex_enter_blocking(&gFUN.nrf.mutex_nrf);
+  uint32_t save = spin_lock_blocking(gFUN.nrf.spin_lock);
   csn_put(LOW);
   // R_RX_PAYLOAD instruction
   uint8_t cmd = R_RX_PAYLOAD;
   spi_write_blocking(SPI_PORT, &cmd, ONE_BYTE);
   spi_read_blocking(SPI_PORT, NOP, message.buffer, sizeof(message));
   csn_put(HIGH);
-  mutex_exit(&gFUN.nrf.mutex_nrf);
+  //mutex_exit(&gFUN.nrf.mutex_nrf);
+  spin_unlock(gFUN.nrf.spin_lock, save);
 
   pMSG->ptx_id = message.payload.ptx_id;
   pMSG->value = message.payload.value;
@@ -807,11 +821,13 @@ void fun_nrf24_config_pipe_address (uint8_t mode)
 		LOG_INF("Set nrf in RX mode.");
 		init_nrf24_prx_registers(); // Config PRX specific registers
 		set_mode(RX_MODE); // Activate RX_MODE
+		gFUN.nrf.mode = RX_MODE;
 	} else {
 		LOG_INF("Set nrf in TX mode.");
 		// Config PTX specific registers and Tx payloads to PRX data pipe 0
 		init_nrf24_ptx_registers(PRX_ADDR_P0); 
 		set_mode(TX_MODE); // Activate TX_MODE
+		gFUN.nrf.mode = TX_MODE;
 	}
 
 	// sleep_ms(1000);
@@ -828,7 +844,9 @@ int fun_nrf24_init (void)
 	pNRF->ready = false;
 	mutex_init(&pNRF->mutex_nrf);
 
-	fun_nrf24_config_pipe_address(pNRF->mode);
+    pNRF->spin_lock = spin_lock_instance(PICO_SPINLOCK_ID_NRF24);
+
+	fun_nrf24_config_pipe_address(RX_MODE);
 
 	debug_registers();
 	debug_rx_address_pipes(RX_ADDR_P0);

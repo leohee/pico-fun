@@ -2,41 +2,41 @@
 #define __FUN_CLI_H__
 
 
-
-struct cli_parser_cmd_option;
-struct cli_parser_parsed_arg;
-
-typedef void (*command_callback_t)(int argc, const struct cli_parser_parsed_arg *args);
-
 typedef union {
-	char		*argument_s;
-	int			argument_i;
-	float		argument_f;
-} cli_parsed_arg_t;
+	char		*arg_char;
+	int			arg_int;
+	float		arg_float;
+} argument_t;
 
-struct cli_parser_cmd_option {
-	const char	*name;
-	const char	*help_msg;
-	const char	*optstring;
-	const char	*optypes;
-	int			argc;
-	command_callback_t		callback;
+struct cli_arg_t {
+	char				type;
+	argument_t			value;
 };
 
-struct cli_parser_parsed_arg {
-	char		type;
-	cli_parsed_arg_t		value;
+typedef void (*cmd_cb)(int argc, const struct cli_arg_t *args);
+
+struct cli_option_t {
+	const char			*name;
+	const char			*help_msg;
+	const char			*optstring;
+	const char			*opttypes;
+	int					argc;
+	cmd_cb				callback;
+};
+
+#define CLI_RX_BUFFERSIZE		(255)
+
+struct fun_cli_t {
+
+	char				rx_buf[CLI_RX_BUFFERSIZE];
+	uint8_t				rx_idx;
 };
 
 
+extern int cli_catch_input (void);
 
-
-extern void cli_parser_proc (void);
 
 extern void fun_cli_init (void);
-
-
-
 
 
 

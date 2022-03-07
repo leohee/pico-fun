@@ -1,13 +1,8 @@
 
 #include "inc_file.h"
 
-#define DEBUG
 
-#define CLI_PARSER_ECHO_BACK
-#define CLI_RX_BUFFERSIZE 1024
-#define CLI_TOKENS_MAX 32
-#define CLI_TOKEN_MATCH(X, Y) strcmp(X, (char const *)Y) == 0
-#define CLI_COMMANDS_MAX 32
+#define CLI_TOKENS_MAX		(8)
 
 #define ASCII_EOT 4
 #define ASCII_ENQ 5
@@ -19,328 +14,308 @@
 #define ASCII_CR 13
 #define ASCII_SPC 32
 #define ASCII_DEL 127
+
 #define ASCII_NOT_CTRL(X)                                                      \
   ((X != ASCII_EOT && X != ASCII_ENQ && X != ASCII_LF && X != ASCII_FF &&      \
     X != ASCII_CR && X != ASCII_DEL && X != ASCII_BS))
+
 #define ASCII_ISSPACE(X)                                                       \
   ((X == ASCII_SPC || X == ASCII_TAB || X == ASCII_LF || X == ASCII_VT ||      \
     X == ASCII_FF || X == ASCII_CR))
+
 #define ASCII_IS_FMT_CHAR(X)                                                   \
   ((X == 'i' || X == 'd' || X == 'o' || X == 'x' || X == 'f' || X == 'c' ||    \
     X == 's'))
 
-static uint8_t cli_rx_buffer[CLI_RX_BUFFERSIZE] = {0};
-static uint8_t cli_rx_buffer_idx = 0;
+static struct cli_option_t cli_options[];
+extern int len_cli_cmd;
 
-static struct cli_parser_cmd_option cmd_option_list[CLI_COMMANDS_MAX] = {NULL};
 
-static void help_callback (int argc, const struct cli_parser_parsed_arg *args)
+static void cli_usage (int argc, const struct cli_arg_t *args)
 {
-	for (int i = 0; i < CLI_COMMANDS_MAX; i++) {
-		if (cmd_option_list[i].name != NULL) {
-			LOG_INF("[%s] [%i] [%s] [%s] [%s]", 
-				cmd_option_list[i].name,
-				cmd_option_list[i].argc,
-				(cmd_option_list[i].optstring != NULL) ? cmd_option_list[i].optstring : "noargs",
-				(cmd_option_list[i].optypes != NULL) ? cmd_option_list[i].optypes : "notypes",
-				cmd_option_list[i].help_msg);
+	int i = 0;
+	printf("cmd\targc\toptstring\topttypes\tdesc");
+	for (i = 0; i < len_cli_cmd; i++) {
+		if (cli_options[i].name != NULL) {
+			printf("%s\t%d\t%s\t%s\t%s\n", cli_options[i].name,
+				cli_options[i].argc,
+				(cli_options[i].optstring != NULL) ? cli_options[i].optstring : "NN",
+				(cli_options[i].opttypes != NULL) ? cli_options[i].opttypes : "NN",
+				cli_options[i].help_msg);
 		}
 	}
 }
 
 static void cli_clear_buffer (void)
 {
-	memset(&cli_rx_buffer[0], 0, sizeof(cli_rx_buffer));
-	cli_rx_buffer_idx = 0;
+	memset(gFUN.cli.rx_buf, 0x00, CLI_RX_BUFFERSIZE);
+	gFUN.cli.rx_idx = 0;
 }
 
-static uint16_t cli_tokenize_args (uint8_t *str, uint8_t **tokens)
+static int cli_push_args (char *str, char **tokens)
 {
-  if (!str) {
-    return 0;
-  }
+	if (NULL == str) {
+		return 0;
+	}
 
-  uint8_t nargs = 0;
+	int nargs = 0;
 
-  // catch 1st arg
-  if (!ASCII_ISSPACE(*str)) {
-    tokens[nargs++] = str;
-  }
+	// catch 1st arg
+	if (!ASCII_ISSPACE(*str)) {
+		tokens[nargs++] = str;
+	}
 
-  // run through the args
-  while (*str != '\0') {
-    char *next_char = (char *)(str + 1);
-    if (ASCII_ISSPACE(*str) && !ASCII_ISSPACE(*next_char)) {
-      tokens[nargs++] = (uint8_t *)next_char;
-      *str = '\0';
-    }
-    str++;
-  }
+	// run through the args
+	while (*str != '\0') {
+		if (ASCII_ISSPACE(*str) && !ASCII_ISSPACE(*(str + 1))) {
+			tokens[nargs++] = (char *)(str + 1);
+			*str = '\0';
+		}
 
-  LOG_INF("nargs[%i]", nargs);
+		str++;
+	}
 
-  return nargs;
+	return nargs;
 }
 
-static uint16_t cli_tokenize_options (uint8_t *str, uint8_t **tokens)
+static int cli_tokenize_options (char *str, char **tokens)
 {
-  if (!str) {
-    return 0;
-  }
+	if (NULL == str) {
+		return 0;
+	}
 
-  uint8_t nopts = 0;
+	int nopts = 0;
+	char delimiter = 0;
 
-  // run through the format string
-  while (*str != '\0') {
-    char delimiter = *(str - 1);
-    if (ASCII_IS_FMT_CHAR(*str) && delimiter == '%') {
-      LOG_INF("fmt[%c%c]", delimiter, *str);
-      tokens[nopts++] = str;
-    }
-    str++;
-  }
+	// run through the format string
+	while (*str != '\0') {
+		delimiter = *(str - 1);
+		if (ASCII_IS_FMT_CHAR(*str) && (delimiter == '%')) {
+			tokens[nopts++] = str;
+		}
 
-  LOG_INF("nopts[%i]", nopts);
+		str++;
+	}
 
-  return nopts;
+	return nopts;
 }
 
-static char cli_parse_option_type (int opt, const char *optypes, int argc, int optind)
+static char cli_parse_option_type (const char *opttypes, int argc, int optind, char **opts)
 {
-  char *opts[CLI_TOKENS_MAX] = {0};
-  uint16_t optc = cli_tokenize_options((uint8_t *)optypes, (uint8_t **)opts);
+	if (argc == cli_tokenize_options((char *)opttypes, (char **)opts)){
+		return *opts[optind];
+	}
 
-  if (optc == argc) {
-    char opt = *opts[optind];
-
-    LOG_INF("opt[%c] optind[%i]", opt, optind);
-
-    return opt;
-  }
-
-  return -1;
+	return -1;
 }
 
-static void cli_arg_parse (uint8_t *str)
+static void cli_catch_arg_value (int argc, char **argv, 
+	struct cli_option_t *pOPT, struct cli_arg_t *pARGS)
 {
-  char *argv[CLI_TOKENS_MAX] = {0};
-  uint16_t argc = cli_tokenize_args(str, (uint8_t **)argv);
+	int idx = 0;
+	optind = 0;
+	struct cli_arg_t *pARG = pARGS;
 
-  // process command
-  for (int i = 0; i < CLI_COMMANDS_MAX; i++) {
-    if (CLI_TOKEN_MATCH(argv[0], cmd_option_list[i].name)) {
-      struct cli_parser_cmd_option cmd_option = cmd_option_list[i];
-      // parse args
-      if (argc > 1 && argc == (cmd_option.argc + 1)) {
-        optind = 0;
-        int parsed_arg_idx = 0;
-        struct cli_parser_parsed_arg cmd_parsed_arg_list[CLI_TOKENS_MAX];
-        while (1) {
-          LOG_INF("getopt argc[%i] optstring[%s]", argc, cmd_option.optstring);
+	while (1) {
+		int opt_arg = 0;
+		opt_arg = getopt(argc, argv, pOPT->optstring);
+		if (opt_arg == -1 || opt_arg == '?') {
+			break;
+		}
 
-          int opt;
-          opt = getopt(argc, argv, cmd_option.optstring);
-          if (opt == -1 || opt == '?') {
-            LOG_INF("getopt opt[%s]", opt == -1 ? "-1" : "?");
-            break;
-          }
+//		printf("%c : ", opt_arg&0xFF);
 
-          LOG_INF("opttypes [%s] idx[%i]", cmd_option.optypes, parsed_arg_idx);
+		char *opts[CLI_TOKENS_MAX] = {0};
+		char opttype = cli_parse_option_type(pOPT->opttypes, pOPT->argc, idx, opts);
+		if (opttype != -1) {
+			pARG = pARGS+idx;
 
-          char opttype = cli_parse_option_type(opt, cmd_option.optypes,
-                                               cmd_option.argc, parsed_arg_idx);
-          if (opttype != -1) {
-            LOG_INF("found matching opt[%c] optind[%i] type[%c] optarg[%s]", 
-				opt, optind, opttype, optarg);
-            // decode and store argument
-            switch (opttype) {
-            case 's':
-              cmd_parsed_arg_list[parsed_arg_idx].type = opttype;
-              cmd_parsed_arg_list[parsed_arg_idx].value.argument_s = optarg;
-              parsed_arg_idx++;
-              break;
-            case 'i':
-              cmd_parsed_arg_list[parsed_arg_idx].type = opttype;
-              cmd_parsed_arg_list[parsed_arg_idx].value.argument_i = atoi(optarg);
-              parsed_arg_idx++;
-              break;
-            case 'f':
-              cmd_parsed_arg_list[parsed_arg_idx].type = opttype;
-              cmd_parsed_arg_list[parsed_arg_idx].value.argument_f = atof(optarg);
-              parsed_arg_idx++;
-              break;
-            default:
-              break;
-            }
-          }
-        }
-        // callback
-        if (cmd_option.callback) {
-          cmd_option.callback(argc, cmd_parsed_arg_list);
-        }
-        return;
-      } else if (argc == 1) {
-        // callback
-        if (cmd_option.callback) {
-          cmd_option.callback(argc, NULL);
-        }
-        return;
-      }
-      LOG_WRN("invalid number of arguments.");
-      return;
-    }
-  }
-  LOG_WRN("command %s not found.", argv[0]);
-}
-
-static void cli_parser_init (void)
-{
-  // register help command
-  cmd_option_list[0].name = "help";
-  cmd_option_list[0].help_msg = "print this help";
-  cmd_option_list[0].optstring = 0;
-  cmd_option_list[0].optypes = 0;
-  cmd_option_list[0].argc = 0;
-  cmd_option_list[0].callback = help_callback;
-}
-
-void cli_parser_proc (void)
-{
-  int rc = getchar_timeout_us(100);
-  if (rc == PICO_ERROR_TIMEOUT) {
-    return;
-  }
-
-  uint8_t cli_rx_data = (rc & 0xFF);
-
-  // check buffer size
-  if (cli_rx_buffer_idx < CLI_RX_BUFFERSIZE) {
-    // process current byte
-    if (ASCII_NOT_CTRL(cli_rx_data)) { // ignore unused ASCII codes
-      cli_rx_buffer[cli_rx_buffer_idx] = cli_rx_data;
-      cli_rx_buffer_idx++;
-
-#if defined(CLI_PARSER_ECHO_BACK)
-      putchar_raw(cli_rx_data); // echo data back to terminal
-#endif
-    } else if (cli_rx_data == ASCII_BS || cli_rx_data == ASCII_DEL) {
-    	// detele current data if backspace or delete
-      cli_rx_buffer[cli_rx_buffer_idx] = 0;
-      if (cli_rx_buffer_idx >= 1) {
-        cli_rx_buffer_idx--;
-      }
-
-#if defined(CLI_PARSER_ECHO_BACK)
-      putchar_raw(cli_rx_data); // echo data back to terminal
-#endif
-    } else if (cli_rx_data == ASCII_CR) {
-      if (cli_rx_buffer_idx == 0) {
-        return;
-      }
-      // valid command, process it
-#if defined(CLI_PARSER_ECHO_BACK)
-      putchar_raw(ASCII_FF); // clear terminal
-#endif
-
-      printf("cli $ %s\n", &cli_rx_buffer[0]);
-      cli_arg_parse(&cli_rx_buffer[0]);
-
-      cli_clear_buffer();
-    }
-  } else {
-    cli_clear_buffer();
-  }
-}
-
-static void cli_parser_register_commands (const struct cli_parser_cmd_option *opts)
-{
-  for (int i = 0; opts[i].name != NULL; i++) {
-    for (int j = 0; j < CLI_COMMANDS_MAX; j++) {
-      if (cmd_option_list[j].name == NULL) {
-        // allocate into command list
-        cmd_option_list[j].name = opts[i].name;
-        cmd_option_list[j].help_msg = opts[i].help_msg;
-        cmd_option_list[j].optstring = opts[i].optstring;
-        cmd_option_list[j].optypes = opts[i].optypes;
-        cmd_option_list[j].argc = opts[i].argc;
-        cmd_option_list[j].callback = opts[i].callback;
-        break;
-      }
-    }
-  }
-}
-
-static void show_version (int argc, const struct cli_parser_parsed_arg *args)
-{
-	LOG_INF("BoardID : %s", gFUN.str_boardid);
-	LOG_INF("Pico %s built @ %s %s", PICO_SDK_VERSION_STRING, 
-		gFUN.build_date, gFUN.build_time);
-
-}
-
-static void cli_nrf_mode (int argc, const struct cli_parser_parsed_arg *args)
-{
-	if (args) {
-		if (argc == 2) {
-			if (args[0].type == 's') {
-				gFUN.nrf.ready = false;
-				if (args[0].value.argument_s[0] == 'R') {
-					fun_nrf24_config_pipe_address(RX_MODE);
-				} else if (args[0].value.argument_s[0] == 'T') {
-					fun_nrf24_config_pipe_address(TX_MODE);
-				}
-				gFUN.nrf.ready = true;
+			switch (opttype) {
+			case 's':
+				pARG->type = opttype;
+				pARG->value.arg_char = optarg;
+//				printf("%s\n", pARG->value.arg_char);
+				idx++;
+				break;
+			case 'i':
+				pARG->type = opttype;
+				pARG->value.arg_int = atoi(optarg);
+//				printf("%d\n", pARG->value.arg_int);
+				idx++;
+				break;
+			case 'f':
+				pARG->type = opttype;
+				pARG->value.arg_float = atof(optarg);
+//				printf("%f\n", pARG->value.arg_float);
+				idx++;
+				break;
+			case 'c':
+				pARG->type = opttype;
+				pARG->value.arg_char[0] = optarg[0];
+				pARG->value.arg_char[1] = 0x00;
+//				printf("%c\n", pARG->value.arg_char[0]);
+				idx++;
+				break;
+			default:
+				printf("other type : %c\n", opttype); // ASCII_IS_FMT_CHAR idoxfcs
+				break;
 			}
 		}
 	}
 
 }
 
-static void cli_get_args (int argc, const struct cli_parser_parsed_arg *args)
+static int cli_parse_string (char *str)
+{
+	int i = 0;
+	char *argv[CLI_TOKENS_MAX] = {0};
+	struct cli_option_t *pOPT = NULL;
+
+	int argc = cli_push_args(str, (char **)argv);
+
+	for (i = 0; i < len_cli_cmd; i++) {
+		pOPT = &cli_options[i];
+
+		if (pOPT->name == NULL) {
+			break;
+		}
+
+		if (strcmp(argv[0], cli_options[i].name) == 0) {
+			if ((argc > 1) && (argc == (pOPT->argc + 1))) {
+				struct cli_arg_t opt_list[CLI_TOKENS_MAX];
+				memset(&opt_list, 0, sizeof(struct cli_arg_t)*CLI_TOKENS_MAX);
+
+				cli_catch_arg_value(argc, argv, pOPT, opt_list);
+
+				if (pOPT->callback) {
+					pOPT->callback(argc, opt_list);
+					printf("$ ");
+				}
+
+				return 0;
+			} else if (argc == 1) {
+				if (pOPT->callback) {
+					pOPT->callback(argc, NULL);
+					printf("$ ");
+				}
+
+				return 0;
+			}
+
+			LOG_WRN("Invalid arguments.\n$ ");
+
+			return -1;
+	    }
+	}
+
+	LOG_WRN("Not found cmd : '%s'\n$ ", argv[0]);
+
+	return -1;
+}
+
+
+
+int cli_catch_input (void)
+{
+//	int rc = getchar();
+	int rc = getchar_timeout_us(100);
+	if (rc == PICO_ERROR_TIMEOUT) {
+		return -1;
+	}
+
+	uint8_t ch = (rc & 0xff);
+
+	if (gFUN.cli.rx_idx < CLI_RX_BUFFERSIZE) {
+		if (ASCII_NOT_CTRL(ch)) {		// ignore unused ASCII codes
+			gFUN.cli.rx_buf[gFUN.cli.rx_idx++] = (char)ch;
+		} else if ((ch == ASCII_BS)||(ch == ASCII_DEL)) { // backspace or delete
+			gFUN.cli.rx_buf[gFUN.cli.rx_idx] = 0;
+			if (gFUN.cli.rx_idx >= 1) {
+				gFUN.cli.rx_idx--;
+			}
+		} else if ((ch == ASCII_LF)||(ch == ASCII_CR)) { // enter
+			if (gFUN.cli.rx_idx == 0) {
+				printf("$ ");
+				return 1;
+			}
+
+			printf("%s\n", gFUN.cli.rx_buf);
+			cli_parse_string(gFUN.cli.rx_buf);
+			cli_clear_buffer();
+		}
+	} else {
+		cli_clear_buffer();
+	}
+
+	return 0;
+}
+
+
+void cli_test_args (int argc, const struct cli_arg_t *args)
 {
   if (args) {
     for (int i = 0; i < (argc - 1); i++) {
       switch (args[i].type) {
       case 's':
-        LOG_INF("[%s] parsed arg [%s]", __func__, args[i].value.argument_s);
+        printf("get string : '%s'\n", args[i].value.arg_char);
         break;
       case 'i':
-        LOG_INF("[%s] parsed arg [%i]", __func__, args[i].value.argument_i);
+        printf("get int : '%d'\n", args[i].value.arg_int);
         break;
       case 'f':
-        LOG_INF("[%s] parsed arg [%f]", __func__, args[i].value.argument_f);
+        printf("get float : '%f'\n", args[i].value.arg_float);
         break;
       default:
-	  	LOG_WRN("not support type : %c", args[i].type);
         break;
       }
     }
   }
 }
 
+void cli_exit (int argc, const struct cli_arg_t *args)
+{
+	LOG_WRN("Bye\n");
+	gFUN.wdt.quire_reboot = true;
+}
+
+void cli_version (int argc, const struct cli_arg_t *args)
+{
+	printf("BoardID : %s", gFUN.str_boardid);
+	printf("Pico %s built @ %s %s", PICO_SDK_VERSION_STRING, 
+		gFUN.build_date, gFUN.build_time);
+}
+
+void cli_set_nrf24mode (int argc, const struct cli_arg_t *args)
+{
+	if ((NULL != args)&&(argc == 2)) {
+		if (args[0].type == 'c') {
+			if ('R' == args[0].value.arg_char[0]) {
+				fun_nrf24_config_pipe_address(RX_MODE);
+			} else if ('T' == args[0].value.arg_char[0]) {
+				fun_nrf24_config_pipe_address(TX_MODE);
+			} else {
+				LOG_INF("nrf -m[R|T]\n");
+			}
+		}
+	}
+}
+
+static struct cli_option_t cli_options[] = {
+	{"help",	"show this help.",	NULL, NULL, 0,		cli_usage},
+//	{"s",		"single arg",		"a:", "%i", 1,		cli_test_args},
+//	{"d",		"double args",		"t:v:", "%i%f", 2,	cli_test_args},
+//	{"t",		"triple args",		"t:v:j:", "%i%f%s", 3,	cli_test_args},
+	{"nrf",		"set nrf24 mode. 'nrf -m[R|T]'",	"m:", "%c", 1, cli_set_nrf24mode},
+	{"reboot",	"reboot device.",		0, 0, 0, 			cli_exit},
+	{"ver",		"show version.",		0, 0, 0,			cli_version},
+	{NULL, NULL, NULL, NULL, 0, NULL} // sentinel
+};
+
+int len_cli_cmd = sizeof(cli_options)/sizeof(cli_options[0]);
+
 void fun_cli_init (void)
 {
-	cli_parser_init();
-
-	/* command line interface. ex :
-	help
-	single_arg -t34234   
-	double_args -t88 -v92.009   
-	triple_args -t2 -v0.5531 -jmystring 
-	version
-	nrf -mR
-	*/
-
-	static struct cli_parser_cmd_option cli_options[] = {
-		{"single_arg", "get single arg from CLI", "t:", "%i", 1, cli_get_args},
-		{"double_args", "get double args from CLI", "t:v:", "%i%f", 2, cli_get_args},
-		{"triple_args", "get triple args from CLI", "t:v:j:", "%i%f%s", 3, cli_get_args},
-		{"version", "get firmware version", NULL, NULL, 0, show_version},
-		{"nrf", "set nRF24 work mode. -m[R|T]", "m:", "%s", 1, cli_nrf_mode},
-		{NULL, NULL, NULL, NULL, 0, NULL} // sentinel
-	};
-
-	cli_parser_register_commands(cli_options);
+	printf("$ ");
 
 }
 

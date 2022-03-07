@@ -53,11 +53,11 @@ extern int printk_hex (uint8_t *buff, uint count);
 #define LOG_COLOR_LIGHT_CYAN	"\x1B[1;36m"
 
 #if defined(LOG_CONFIG_TAGS)
-#define LOG_TAG_ASS				"[A] "
-#define LOG_TAG_ERR 			"[E] "
-#define LOG_TAG_WRN 			"[W] "
-#define LOG_TAG_INF 			"[I] "
-#define LOG_TAG_DBG 			"[D] "
+#define LOG_TAG_ASS				" [A] "
+#define LOG_TAG_ERR 			" [E] "
+#define LOG_TAG_WRN 			" [W] "
+#define LOG_TAG_INF 			" [I] "
+#define LOG_TAG_DBG 			" [D] "
 #else
 #define LOG_TAG_ASS 			""
 #define LOG_TAG_ERR 			""
@@ -112,14 +112,14 @@ extern int printk_hex (uint8_t *buff, uint count);
 
 #if defined(LOG_CONFIG_COLOR)
 #define LOG_CALL_TPYE(tag, tag_color, format, ...)	\
-	printk("%s%s%s(%d): " format "%s" LOG_NEWLINE,	\
-	       tag_color, tag, __func__, __LINE__, ##__VA_ARGS__, LOG_COLOR_OFF)
+	printk("[%lld]%s%s%s(%d): " format "%s" LOG_NEWLINE,	\
+	       time_us_64()/1000, tag_color, tag, __func__, __LINE__, ##__VA_ARGS__, LOG_COLOR_OFF)
 
 #define LOG_CALL_TPYE0(color) printk("%s" color)
 #else
 #define LOG_CALL_TPYE(tag, tag_color, format, ...)	\
-	printk("%s%s%s(%d): " format "%s" LOG_NEWLINE,	\
-	       LOG_COLOR_NONE, tag, __func__, __LINE__, ##__VA_ARGS__, LOG_COLOR_NONE)
+	printk("[%lld]%s%s%s(%d): " format "%s" LOG_NEWLINE,	\
+	       time_us_64()/1000, LOG_COLOR_NONE, tag, __func__, __LINE__, ##__VA_ARGS__, LOG_COLOR_NONE)
 
 #define LOG_CALL_TPYE0(color) { ; }
 #endif
