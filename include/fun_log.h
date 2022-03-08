@@ -86,7 +86,7 @@ extern int printk_hex (const uint8_t *buff, uint count);
 #endif
 
 #if !defined(LOG_CONFIG_INF_COLOR)
-#define LOG_TAG_INF_COLOR			LOG_COLOR_BLUE
+#define LOG_TAG_INF_COLOR			LOG_COLOR_NONE
 #else
 #define LOG_TAG_INF_COLOR			LOG_CONFIG_INF_COLOR
 #endif

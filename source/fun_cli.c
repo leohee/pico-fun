@@ -121,7 +121,7 @@ static void cli_catch_arg_value (int argc, char **argv,
 			break;
 		}
 
-//		printf("%c : ", opt_arg&0xFF);
+		printf("%c : ", opt_arg&0xFF);
 
 		char *opts[CLI_TOKENS_MAX] = {0};
 		char opttype = cli_parse_option_type(pOPT->opttypes, pOPT->argc, idx, opts);
@@ -134,26 +134,26 @@ static void cli_catch_arg_value (int argc, char **argv,
 			case 's':
 				pARG->type = opttype;
 				pARG->value.arg_char = optarg;
-//				printf("%s\n", pARG->value.arg_char);
+				printf("%s\n", pARG->value.arg_char);
 				idx++;
 				break;
 			case 'i':
 				pARG->type = opttype;
 				pARG->value.arg_int = atoi(optarg);
-//				printf("%d\n", pARG->value.arg_int);
+				printf("%d\n", pARG->value.arg_int);
 				idx++;
 				break;
 			case 'f':
 				pARG->type = opttype;
 				pARG->value.arg_float = atof(optarg);
-//				printf("%f\n", pARG->value.arg_float);
+				printf("%f\n", pARG->value.arg_float);
 				idx++;
 				break;
 			case 'c':
 				pARG->type = opttype;
 				pARG->value.arg_char[0] = optarg[0];
 				pARG->value.arg_char[1] = 0x00;
-//				printf("%c\n", pARG->value.arg_char[0]);
+				printf("%c\n", pARG->value.arg_char[0]);
 				idx++;
 				break;
 			default:
@@ -354,6 +354,7 @@ void cli_set_nrf24mode (int argc, const struct cli_arg_t *args)
 {
 	if ((NULL != args)&&(argc == 2)) {
 		if (args[0].type == 'c') {
+printf("%d\n", args[0].value.arg_char[0]);
 			if ('R' == args[0].value.arg_char[0]) {
 				fun_nrf24_config_pipe_address(RX_MODE);
 			} else if ('T' == args[0].value.arg_char[0]) {
@@ -369,7 +370,7 @@ static struct cli_option_t cli_options[] = {
 	{"help",	NULL, NULL, 0, cli_usage, "show this help.", NULL},
 //	{"s",		"t:", "%i", 1, cli_test_args, "single arg", "s -t1"},
 //	{"d",		"t:v:", "%i%f", 2, cli_test_args, "double args", "d -t2 -v0.1"},
-	{"test",	"t:v:j:", "%i%f%s", 3, cli_test_args, "triple args", "test -t3 -v0.2 -jabcdef"},
+	{"test",	"t:v:j:", "%i%f%s", 3, cli_test_args, "triple args", "\"test -t3 -v0.2 -jabcdef\""},
 	{"nrf",		"m:", "%c", 1, cli_set_nrf24mode, "set nrf24 mode.", "\"nrf -m[R|T]\""},
 	{"wifi_test",	0, 0, 0, cli_wifi_test, "esp wifi test", NULL},
 	{"flash",	"w:r:", "%i", 1, cli_flash, "parameter flash.", "\"flash <-r0|-w0>\""},
