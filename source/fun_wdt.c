@@ -16,7 +16,7 @@ void fun_wdt_init (void)
 
 	pWDT->enable = true;
 	pWDT->quire_reboot = false;
-	pWDT->period = 1000;
+	pWDT->period = 3000;
 
     if (watchdog_caused_reboot()) {
         LOG_INF("====Rebooted by Watchdog!====");

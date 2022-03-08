@@ -10,6 +10,8 @@ struct fun_tick_t {
 
 };
 
+extern void datetime_format (char *buf, uint buf_size, const datetime_t *t);
+
 extern void fun_tick_init (void);
 
 

@@ -89,13 +89,8 @@ humidity, temperature);
     return true;
 }
 
-void fun_esp_init (void)
+void esp_test (void)
 {
-	uart_init(UART_ESP, ESP_BAUDRATE);
-
-    gpio_set_function(UART_TX_ESP_PIN, GPIO_FUNC_UART);
-    gpio_set_function(UART_RX_ESP_PIN, GPIO_FUNC_UART);
-
 	uart_puts(UART_ESP, "+++");
 
     sleep_ms(1000);
@@ -113,7 +108,23 @@ void fun_esp_init (void)
     sendCMD("AT+CIFSR", "OK"); // ASK IP
 
 	send_sensor_values("test", "80.1", "22.5");
+}
 
+
+void fun_esp_init (void)
+{
+	uart_init(UART_ESP, ESP_BAUDRATE);
+
+    gpio_set_function(UART_TX_ESP_PIN, GPIO_FUNC_UART);
+    gpio_set_function(UART_RX_ESP_PIN, GPIO_FUNC_UART);
+
+
+    gpio_pull_up(UART_RX_ESP_PIN);
+
+    uart_set_translate_crlf(UART_ESP, false);
+    uart_set_hw_flow(UART_ESP, false, false);
+    uart_set_format(UART_ESP, DATA_BITS, STOP_BITS, PARITY);
+    uart_set_fifo_enabled(UART_ESP, true);
 
 }
 

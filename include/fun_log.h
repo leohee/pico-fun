@@ -35,13 +35,13 @@ extern void (*log_hook)(const char *str);
 
 extern void log_init (char *buff, uint buff_len, void (*hook)(const char *));
 
-extern int printk_hex (uint8_t *buff, uint count);
+extern int printk_hex (const uint8_t *buff, uint count);
 
 #define LOG_COLOR_NONE    		""
 #define LOG_COLOR_OFF     		"\x1B[0m"
 #define LOG_COLOR_RED     		"\x1B[0;31m"
 #define LOG_COLOR_LIGHT_RED     "\x1B[1;31m"
-#define LOG_COLOR_GREEB     	"\x1B[0;32m"
+#define LOG_COLOR_GREEN     	"\x1B[0;32m"
 #define LOG_COLOR_LIGHT_GREEN   "\x1B[1;32m"
 #define LOG_COLOR_YELLOW  		"\x1B[0;33m"
 #define LOG_COLOR_LIGHT_YELLOW  "\x1B[1;33m"
@@ -68,31 +68,31 @@ extern int printk_hex (uint8_t *buff, uint count);
 
 
 #if !defined(LOG_CONFIG_ASS_COLOR)
-#define LOG_TAG_ASS_COLOR			LOG_COLOR_LIGHT_MAGENTA
+#define LOG_TAG_ASS_COLOR			LOG_COLOR_MAGENTA
 #else
 #define LOG_TAG_ASS_COLOR			LOG_CONFIG_ASS_COLOR
 #endif
 
 #if !defined(LOG_CONFIG_ERR_COLOR)
-#define LOG_TAG_ERR_COLOR			LOG_COLOR_LIGHT_RED
+#define LOG_TAG_ERR_COLOR			LOG_COLOR_RED
 #else
 #define LOG_TAG_ERR_COLOR			LOG_CONFIG_ERR_COLOR
 #endif
 
 #if !defined(LOG_CONFIG_WRN_COLOR)
-#define LOG_TAG_WRN_COLOR			LOG_COLOR_LIGHT_YELLOW
+#define LOG_TAG_WRN_COLOR			LOG_COLOR_YELLOW
 #else
 #define LOG_TAG_WRN_COLOR			LOG_CONFIG_WRN_COLOR
 #endif
 
 #if !defined(LOG_CONFIG_INF_COLOR)
-#define LOG_TAG_INF_COLOR			LOG_COLOR_LIGHT_BLUE
+#define LOG_TAG_INF_COLOR			LOG_COLOR_BLUE
 #else
 #define LOG_TAG_INF_COLOR			LOG_CONFIG_INF_COLOR
 #endif
 
 #if !defined(LOG_CONFIG_DBG_COLOR)
-#define LOG_TAG_DBG_COLOR			LOG_COLOR_LIGHT_GREEN
+#define LOG_TAG_DBG_COLOR			LOG_COLOR_GREEN
 #else
 #define LOG_TAG_DBG_COLOR			LOG_COLOR_LIGHT_COLOR
 #endif

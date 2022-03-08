@@ -1,7 +1,7 @@
 
 #include "inc_file.h"
 
-static void datetime_format (char *buf, uint buf_size, const datetime_t *t)
+void datetime_format (char *buf, uint buf_size, const datetime_t *t)
 {
     snprintf(buf, buf_size,
         "%04d-%02d-%02d %02d:%02d:%02d",

@@ -9,6 +9,7 @@ typedef union {
 } argument_t;
 
 struct cli_arg_t {
+	char				opt;
 	char				type;
 	argument_t			value;
 };

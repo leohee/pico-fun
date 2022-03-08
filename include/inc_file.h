@@ -16,6 +16,7 @@
 #include "pico/util/datetime.h"
 #include "pico/util/queue.h"
 
+#include "hardware/flash.h"
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
 #include "hardware/rtc.h"
@@ -36,6 +37,7 @@
 #include "fun_wdt.h"
 #include "fun_cli.h"
 #include "fun_esp.h"
+#include "fun_flash.h"
 
 #include "nRF24L01_regs.h"
 #include "fun_nrf24.h"

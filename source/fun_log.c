@@ -31,7 +31,7 @@ int printk (const char *format, ...)
 	return 0;
 }
 
-int printk_hex (uint8_t *buff, uint count)
+int printk_hex (const uint8_t *buff, uint count)
 {
 	static const char hex[] = "0123456789ABCDEF";
 	uint i = 0, j = 0;

@@ -34,7 +34,7 @@ extern int len_cli_cmd;
 static void cli_usage (int argc, const struct cli_arg_t *args)
 {
 	int i = 0;
-	printf("cmd\targc\toptstring\topttypes\tdesc");
+	printf("cmd\targc\toptstring\topttypes\tdesc\n");
 	for (i = 0; i < len_cli_cmd; i++) {
 		if (cli_options[i].name != NULL) {
 			printf("%s\t%d\t%s\t%s\t%s\n", cli_options[i].name,
@@ -102,7 +102,7 @@ static int cli_tokenize_options (char *str, char **tokens)
 
 static char cli_parse_option_type (const char *opttypes, int argc, int optind, char **opts)
 {
-	if (argc == cli_tokenize_options((char *)opttypes, (char **)opts)){
+	if (argc == cli_tokenize_options((char *)opttypes, (char **)opts)) {
 		return *opts[optind];
 	}
 
@@ -129,6 +129,8 @@ static void cli_catch_arg_value (int argc, char **argv,
 		char opttype = cli_parse_option_type(pOPT->opttypes, pOPT->argc, idx, opts);
 		if (opttype != -1) {
 			pARG = pARGS+idx;
+
+			pARG->opt = opt_arg&0xFF;
 
 			switch (opttype) {
 			case 's':
@@ -228,18 +230,20 @@ int cli_catch_input (void)
 	if (gFUN.cli.rx_idx < CLI_RX_BUFFERSIZE) {
 		if (ASCII_NOT_CTRL(ch)) {		// ignore unused ASCII codes
 			gFUN.cli.rx_buf[gFUN.cli.rx_idx++] = (char)ch;
+			putchar_raw(ch);
 		} else if ((ch == ASCII_BS)||(ch == ASCII_DEL)) { // backspace or delete
 			gFUN.cli.rx_buf[gFUN.cli.rx_idx] = 0;
 			if (gFUN.cli.rx_idx >= 1) {
 				gFUN.cli.rx_idx--;
 			}
+			putchar_raw(ch);
 		} else if ((ch == ASCII_LF)||(ch == ASCII_CR)) { // enter
 			if (gFUN.cli.rx_idx == 0) {
-				printf("$ ");
+				printf("\n$ ");
 				return 1;
 			}
-
-			printf("%s\n", gFUN.cli.rx_buf);
+			printf("\n");
+//			printf("%s\n", gFUN.cli.rx_buf);
 			cli_parse_string(gFUN.cli.rx_buf);
 			cli_clear_buffer();
 		}
@@ -278,11 +282,39 @@ void cli_exit (int argc, const struct cli_arg_t *args)
 	gFUN.wdt.quire_reboot = true;
 }
 
+void cli_clear (int argc, const struct cli_arg_t *args)
+{
+	putchar_raw(ASCII_FF); // clear terminal
+}
+
+void cli_wifi_test (int argc, const struct cli_arg_t *args)
+{
+	esp_test();
+}
+
+void cli_flash (int argc, const struct cli_arg_t *args)
+{
+	if ((NULL != args)&&(argc == 2)) {
+		if ('w' == args[0].opt) {
+			fun_flash_test();
+		} else if ('r' == args[0].opt) {
+			fun_flash_read();
+		}
+	}
+}
+
 void cli_version (int argc, const struct cli_arg_t *args)
 {
-	printf("BoardID : %s", gFUN.str_boardid);
-	printf("Pico %s built @ %s %s", PICO_SDK_VERSION_STRING, 
+	printf("BoardID : %s\n", gFUN.str_boardid);
+	printf("Pico %s built @ %s %s\n", PICO_SDK_VERSION_STRING, 
 		gFUN.build_date, gFUN.build_time);
+}
+
+void cli_datetime (int argc, const struct cli_arg_t *args)
+{
+	rtc_get_datetime(&gFUN.t);
+	datetime_format(gFUN.tick.str_clock, SIZE_TIMESTAMP, &gFUN.t);
+	LOG_INF("%s", gFUN.tick.str_clock);
 }
 
 void cli_set_nrf24mode (int argc, const struct cli_arg_t *args)
@@ -306,7 +338,11 @@ static struct cli_option_t cli_options[] = {
 //	{"d",		"double args",		"t:v:", "%i%f", 2,	cli_test_args},
 //	{"t",		"triple args",		"t:v:j:", "%i%f%s", 3,	cli_test_args},
 	{"nrf",		"set nrf24 mode. 'nrf -m[R|T]'",	"m:", "%c", 1, cli_set_nrf24mode},
+	{"wifi_test", "esp wifi test",		0, 0, 0,			cli_wifi_test},
+	{"flash", "parameter flash. 'flash <-r0|-w0>'",		"w:r:", "%i", 1,	cli_flash},
 	{"reboot",	"reboot device.",		0, 0, 0, 			cli_exit},
+	{"clear",	"clear srceen.",		0, 0, 0, 			cli_clear},
+	{"date",	"show current date time.",		0, 0, 0, 	cli_datetime},
 	{"ver",		"show version.",		0, 0, 0,			cli_version},
 	{NULL, NULL, NULL, NULL, 0, NULL} // sentinel
 };

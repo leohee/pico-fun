@@ -61,10 +61,9 @@ static int fun_pico_init (void)
 
 int main (void)
 {
-	uint64_t us = 0;
-	char cur_us[21] = {0x00};
-
     stdio_init_all();
+
+	sleep_ms(5000);
 
 	fun_log_init();
 
