@@ -18,11 +18,12 @@ typedef void (*cmd_cb)(int argc, const struct cli_arg_t *args);
 
 struct cli_option_t {
 	const char			*name;
-	const char			*help_msg;
 	const char			*optstring;
 	const char			*opttypes;
 	int					argc;
 	cmd_cb				callback;
+	const char			*help_msg;
+	const char			*example;
 };
 
 #define CLI_RX_BUFFERSIZE		(255)

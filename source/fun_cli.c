@@ -34,14 +34,12 @@ extern int len_cli_cmd;
 static void cli_usage (int argc, const struct cli_arg_t *args)
 {
 	int i = 0;
-	printf("cmd\targc\toptstring\topttypes\tdesc\n");
+	printf("cmd\tdesc\t\t\t\tex.\n");
 	for (i = 0; i < len_cli_cmd; i++) {
 		if (cli_options[i].name != NULL) {
-			printf("%s\t%d\t%s\t%s\t%s\n", cli_options[i].name,
-				cli_options[i].argc,
-				(cli_options[i].optstring != NULL) ? cli_options[i].optstring : "NN",
-				(cli_options[i].opttypes != NULL) ? cli_options[i].opttypes : "NN",
-				cli_options[i].help_msg);
+			printf("%s\t%s\t\t\t%s\n", cli_options[i].name,
+				cli_options[i].help_msg,
+				cli_options[i].argc ? cli_options[i].example : "");
 		}
 	}
 }
@@ -182,7 +180,41 @@ static int cli_parse_string (char *str)
 			break;
 		}
 
-		if (strcmp(argv[0], cli_options[i].name) == 0) {
+		if (strcmp(argv[0], pOPT->name) == 0) {
+			if (pOPT->argc) {
+				if ((argc > 1)&&(argc == (pOPT->argc + 1))) {
+					struct cli_arg_t opt_list[CLI_TOKENS_MAX];
+					memset(&opt_list, 0, sizeof(struct cli_arg_t)*CLI_TOKENS_MAX);
+
+					cli_catch_arg_value(argc, argv, pOPT, opt_list);
+
+					if (pOPT->callback) {
+						pOPT->callback(argc, opt_list);
+						printf("$ ");
+					}
+
+					return 0;
+				} else {
+					LOG_WRN("%s ex. %s", pOPT->help_msg, pOPT->example);
+					return -1;
+				}
+			} else {
+				if (argc == 1) {
+					if (pOPT->callback) {
+						pOPT->callback(argc, NULL);
+						printf("$ ");
+					}
+
+					return 0;
+				} else {
+					LOG_WRN("%s : %s", pOPT->name, pOPT->help_msg);
+					return -1;
+				}
+			}
+		}
+
+/*
+		if (strcmp(argv[0], pOPT->name) == 0) {
 			if ((argc > 1) && (argc == (pOPT->argc + 1))) {
 				struct cli_arg_t opt_list[CLI_TOKENS_MAX];
 				memset(&opt_list, 0, sizeof(struct cli_arg_t)*CLI_TOKENS_MAX);
@@ -208,6 +240,7 @@ static int cli_parse_string (char *str)
 
 			return -1;
 	    }
+*/
 	}
 
 	LOG_WRN("Not found cmd : '%s'\n$ ", argv[0]);
@@ -333,18 +366,17 @@ void cli_set_nrf24mode (int argc, const struct cli_arg_t *args)
 }
 
 static struct cli_option_t cli_options[] = {
-	{"help",	"show this help.",	NULL, NULL, 0,		cli_usage},
-//	{"s",		"single arg",		"a:", "%i", 1,		cli_test_args},
-//	{"d",		"double args",		"t:v:", "%i%f", 2,	cli_test_args},
-//	{"t",		"triple args",		"t:v:j:", "%i%f%s", 3,	cli_test_args},
-	{"nrf",		"set nrf24 mode. 'nrf -m[R|T]'",	"m:", "%c", 1, cli_set_nrf24mode},
-	{"wifi_test", "esp wifi test",		0, 0, 0,			cli_wifi_test},
-	{"flash", "parameter flash. 'flash <-r0|-w0>'",		"w:r:", "%i", 1,	cli_flash},
-	{"reboot",	"reboot device.",		0, 0, 0, 			cli_exit},
-	{"clear",	"clear srceen.",		0, 0, 0, 			cli_clear},
-	{"date",	"show current date time.",		0, 0, 0, 	cli_datetime},
-	{"ver",		"show version.",		0, 0, 0,			cli_version},
-	{NULL, NULL, NULL, NULL, 0, NULL} // sentinel
+	{"help",	NULL, NULL, 0, cli_usage, "show this help.", NULL},
+//	{"s",		"t:", "%i", 1, cli_test_args, "single arg", "s -t1"},
+//	{"d",		"t:v:", "%i%f", 2, cli_test_args, "double args", "d -t2 -v0.1"},
+	{"test",	"t:v:j:", "%i%f%s", 3, cli_test_args, "triple args", "test -t3 -v0.2 -jabcdef"},
+	{"nrf",		"m:", "%c", 1, cli_set_nrf24mode, "set nrf24 mode.", "\"nrf -m[R|T]\""},
+	{"wifi_test",	0, 0, 0, cli_wifi_test, "esp wifi test", NULL},
+	{"flash",	"w:r:", "%i", 1, cli_flash, "parameter flash.", "\"flash <-r0|-w0>\""},
+	{"reboot",	0, 0, 0, cli_exit, "reboot device.", NULL},
+	{"date",	0, 0, 0, cli_datetime, "show current date time.", NULL},
+	{"ver",		0, 0, 0, cli_version, "show version.", NULL},
+	{NULL,		NULL, NULL, 0, NULL, NULL, NULL} // sentinel
 };
 
 int len_cli_cmd = sizeof(cli_options)/sizeof(cli_options[0]);
