@@ -1,7 +1,7 @@
 #ifndef __FUN_ESP_H__
 #define __FUN_ESP_H__
 
-#define UART_ESP			uart1
+#define UART_ESP			uart0
 #define ESP_BAUDRATE		115200
 #define DATA_BITS         8
 #define STOP_BITS         1

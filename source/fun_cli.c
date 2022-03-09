@@ -125,6 +125,7 @@ static void cli_catch_arg_value (int argc, char **argv,
 
 		char *opts[CLI_TOKENS_MAX] = {0};
 		char opttype = cli_parse_option_type(pOPT->opttypes, pOPT->argc, idx, opts);
+printf("%c = %d\n", opttype, opttype);
 		if (opttype != -1) {
 			pARG = pARGS+idx;
 
@@ -151,9 +152,8 @@ static void cli_catch_arg_value (int argc, char **argv,
 				break;
 			case 'c':
 				pARG->type = opttype;
-				pARG->value.arg_char[0] = optarg[0];
-				pARG->value.arg_char[1] = 0x00;
-				printf("%c\n", pARG->value.arg_char[0]);
+				pARG->value.arg_char = optarg;
+				printf("%c - %s\n", pARG->value.arg_char[0], optarg);
 				idx++;
 				break;
 			default:
@@ -336,6 +336,13 @@ void cli_flash (int argc, const struct cli_arg_t *args)
 	}
 }
 
+void cli_at_cmd (int argc, const struct cli_arg_t *args)
+{
+	if ((NULL != args)&&(2 == argc)&&('s' == args[0].type)) {
+		printf("%s\n", args[0].value.arg_char);
+	}
+}
+
 void cli_version (int argc, const struct cli_arg_t *args)
 {
 	printf("BoardID : %s\n", gFUN.str_boardid);
@@ -373,7 +380,8 @@ static struct cli_option_t cli_options[] = {
 	{"test",	"t:v:j:", "%i%f%s", 3, cli_test_args, "triple args", "\"test -t3 -v0.2 -jabcdef\""},
 	{"nrf",		"m:", "%c", 1, cli_set_nrf24mode, "set nrf24 mode.", "\"nrf -m[R|T]\""},
 	{"wifi_test",	0, 0, 0, cli_wifi_test, "esp wifi test", NULL},
-	{"flash",	"w:r:", "%i", 1, cli_flash, "parameter flash.", "\"flash <-r0|-w0>\""},
+	{"flash",	"w:r:", "%i", 1, cli_flash, "param flash.", "\"flash <-r0|-w0>\""},
+	{"at",		"p:", "%s", 1, cli_at_cmd, "send at cmd.", "\"at -pAT+GMR\""},
 	{"reboot",	0, 0, 0, cli_exit, "reboot device.", NULL},
 	{"date",	0, 0, 0, cli_datetime, "show current date time.", NULL},
 	{"ver",		0, 0, 0, cli_version, "show version.", NULL},

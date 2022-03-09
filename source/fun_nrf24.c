@@ -756,19 +756,19 @@ void debug_registers (void)
   uint8_t value = 0;
   
   value = r_register(CONFIG);
-  LOG_INF("CONFIG: 0x%02X", value);
+  LOG_DBG("CONFIG: 0x%02X", value);
 
   value = r_register(EN_RXADDR);
-  LOG_INF("EN_RXADDR: 0x%02X", value);
+  LOG_DBG("EN_RXADDR: 0x%02X", value);
 
   value = r_register(SETUP_AW);
-  LOG_INF("SETUP_AW: 0x%02X", value);
+  LOG_DBG("SETUP_AW: 0x%02X", value);
 
   value = r_register(RF_SETUP);
-  LOG_INF("RF_SETUP: 0x%02X", value);
+  LOG_DBG("RF_SETUP: 0x%02X", value);
 
   value = r_register(EN_AA);
-  LOG_INF("EN_AA: 0x%02X", value);
+  LOG_DBG("EN_AA: 0x%02X", value);
 
   return;
 }
@@ -781,25 +781,25 @@ void debug_rx_address_pipes (uint8_t reg)
   {
     case RX_ADDR_P0:
       r_register_all(RX_ADDR_P0, buffer, FIVE_BYTES);
-      LOG_INF("RX_ADDR_P0: 0x%02X%02X%02X%02X%02X", 
+      LOG_DBG("RX_ADDR_P0: 0x%02X%02X%02X%02X%02X", 
       	buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
     break;
 
     case RX_ADDR_P1:
       r_register_all(RX_ADDR_P1, buffer, FIVE_BYTES);
-      LOG_INF("RX_ADDR_P1: 0x%02X%02X%02X%02X%02X", 
+      LOG_DBG("RX_ADDR_P1: 0x%02X%02X%02X%02X%02X", 
       	buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
     break;
 
     case TX_ADDR:
       r_register_all(RX_ADDR_P1, buffer, FIVE_BYTES);
-      LOG_INF("TX_ADDR: 0x%02X%02X%02X%02X%02X", 
+      LOG_DBG("TX_ADDR: 0x%02X%02X%02X%02X%02X", 
       	buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
     break;
     
     default:
       buffer[LSB] = r_register(reg);
-      LOG_INF("RX_ADDR_P%d: 0x%02X", reg - 10, buffer[LSB]);
+      LOG_DBG("RX_ADDR_P%d: 0x%02X", reg - 10, buffer[LSB]);
     break;
   }
 }
