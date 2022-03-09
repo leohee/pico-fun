@@ -41,13 +41,19 @@ int printk_hex (const uint8_t *buff, uint count)
 	uint str_index = 0;
 	uint cnt = (count+15)>>4;
 
+	printf("offs  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F   ascii\n");
+	printf("------------------------------------------------------------------------\n");
+
 	for (i = 0; i < cnt; i++) {
 		index = 0;
 		str_index = 0;
-		str_val[index++] = hex[(i & 0xF000) >> 12];
+		memset(str, 0, 16);
+		memset(str_val, 0, 75);
+
 		str_val[index++] = hex[(i & 0xF00) >> 8];
 		str_val[index++] = hex[(i & 0xF0) >> 4];
-		str_val[index++] = hex[i & 0xF];
+		str_val[index++] = hex[(i & 0xF)];
+		str_val[index++] = '0';
 		str_val[index++] = ' ';
 		str_val[index++] = ' ';
 
@@ -56,8 +62,8 @@ int printk_hex (const uint8_t *buff, uint count)
 				str_val[index++] = hex[(buff[j + (i << 4)] & 0xF0) >> 4];
 				str_val[index++] = hex[buff[j + (i << 4)] & 0xF];
 				str_val[index++] = ' ';
-				if ((buff[j] >= 0x20) && (buff[j] <= 0x7E)) {
-					str[str_index++] = buff[j];
+				if ((buff[j + (i << 4)] >= 0x20) && (buff[j + (i << 4)] <= 0x7E)) {
+					str[str_index++] = buff[j + (i << 4)];
 				} else {
 					str[str_index++] = '.';
 				}
@@ -70,7 +76,7 @@ int printk_hex (const uint8_t *buff, uint count)
 		}
 		str_val[index++] = ' ';
 		str_val[index++] = ' ';
-		memcpy(&str_val[index], str, str_index);
+		strncpy(&str_val[index], str, str_index);
 		index += str_index;
 		str_val[index++] = '\n';
 		str_val[index++] = '\0';

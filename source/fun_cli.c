@@ -121,11 +121,11 @@ static void cli_catch_arg_value (int argc, char **argv,
 			break;
 		}
 
-		printf("%c : ", opt_arg&0xFF);
+//		printf("%c : ", opt_arg&0xFF);
 
 		char *opts[CLI_TOKENS_MAX] = {0};
 		char opttype = cli_parse_option_type(pOPT->opttypes, pOPT->argc, idx, opts);
-printf("%c = %d\n", opttype, opttype);
+
 		if (opttype != -1) {
 			pARG = pARGS+idx;
 
@@ -135,29 +135,29 @@ printf("%c = %d\n", opttype, opttype);
 			case 's':
 				pARG->type = opttype;
 				pARG->value.arg_char = optarg;
-				printf("%s\n", pARG->value.arg_char);
+//				printf("%s\n", pARG->value.arg_char);
 				idx++;
 				break;
 			case 'i':
 				pARG->type = opttype;
 				pARG->value.arg_int = atoi(optarg);
-				printf("%d\n", pARG->value.arg_int);
+//				printf("%d\n", pARG->value.arg_int);
 				idx++;
 				break;
 			case 'f':
 				pARG->type = opttype;
 				pARG->value.arg_float = atof(optarg);
-				printf("%f\n", pARG->value.arg_float);
+//				printf("%f\n", pARG->value.arg_float);
 				idx++;
 				break;
 			case 'c':
 				pARG->type = opttype;
 				pARG->value.arg_char = optarg;
-				printf("%c - %s\n", pARG->value.arg_char[0], optarg);
+//				printf("%c\n", pARG->value.arg_char[0]);
 				idx++;
 				break;
 			default:
-				printf("other type : %c\n", opttype); // ASCII_IS_FMT_CHAR idoxfcs
+				LOG_WRN("other type : %c\n", opttype); // ASCII_IS_FMT_CHAR idoxfcs
 				break;
 			}
 		}
@@ -212,35 +212,6 @@ static int cli_parse_string (char *str)
 				}
 			}
 		}
-
-/*
-		if (strcmp(argv[0], pOPT->name) == 0) {
-			if ((argc > 1) && (argc == (pOPT->argc + 1))) {
-				struct cli_arg_t opt_list[CLI_TOKENS_MAX];
-				memset(&opt_list, 0, sizeof(struct cli_arg_t)*CLI_TOKENS_MAX);
-
-				cli_catch_arg_value(argc, argv, pOPT, opt_list);
-
-				if (pOPT->callback) {
-					pOPT->callback(argc, opt_list);
-					printf("$ ");
-				}
-
-				return 0;
-			} else if (argc == 1) {
-				if (pOPT->callback) {
-					pOPT->callback(argc, NULL);
-					printf("$ ");
-				}
-
-				return 0;
-			}
-
-			LOG_WRN("Invalid arguments.\n$ ");
-
-			return -1;
-	    }
-*/
 	}
 
 	LOG_WRN("Not found cmd : '%s'\n$ ", argv[0]);
@@ -339,7 +310,7 @@ void cli_flash (int argc, const struct cli_arg_t *args)
 void cli_at_cmd (int argc, const struct cli_arg_t *args)
 {
 	if ((NULL != args)&&(2 == argc)&&('s' == args[0].type)) {
-		printf("%s\n", args[0].value.arg_char);
+		sendCMD(args[0].value.arg_char, "OK");
 	}
 }
 
@@ -354,21 +325,18 @@ void cli_datetime (int argc, const struct cli_arg_t *args)
 {
 	rtc_get_datetime(&gFUN.t);
 	datetime_format(gFUN.tick.str_clock, SIZE_TIMESTAMP, &gFUN.t);
-	LOG_INF("%s", gFUN.tick.str_clock);
+	printf("[%lld] %s\n", time_us_64()/1000, gFUN.tick.str_clock);
 }
 
 void cli_set_nrf24mode (int argc, const struct cli_arg_t *args)
 {
-	if ((NULL != args)&&(argc == 2)) {
-		if (args[0].type == 'c') {
-printf("%d\n", args[0].value.arg_char[0]);
-			if ('R' == args[0].value.arg_char[0]) {
-				fun_nrf24_config_pipe_address(RX_MODE);
-			} else if ('T' == args[0].value.arg_char[0]) {
-				fun_nrf24_config_pipe_address(TX_MODE);
-			} else {
-				LOG_INF("nrf -m[R|T]\n");
-			}
+	if ((NULL != args)&&(argc == 2)&&(args[0].type == 'c')) {
+		if ('R' == args[0].value.arg_char[0]) {
+			fun_nrf24_config_pipe_address(RX_MODE);
+		} else if ('T' == args[0].value.arg_char[0]) {
+			fun_nrf24_config_pipe_address(TX_MODE);
+		} else {
+			LOG_INF("ex: nrf -m[R|T]\n");
 		}
 	}
 }
@@ -388,7 +356,7 @@ static struct cli_option_t cli_options[] = {
 	{NULL,		NULL, NULL, 0, NULL, NULL, NULL} // sentinel
 };
 
-int len_cli_cmd = sizeof(cli_options)/sizeof(cli_options[0]);
+int len_cli_cmd = count_of(cli_options);
 
 void fun_cli_init (void)
 {

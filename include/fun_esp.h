@@ -14,6 +14,9 @@ struct fun_esp_t {
 
 };
 
+extern bool sendCMD (const char *cmd, const char *act);
+
+
 extern void esp_test (void);
 
 extern void fun_esp_init (void);

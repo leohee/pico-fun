@@ -9,7 +9,7 @@ char uart_command[50] = "";
 char buf[256] = {0};
 
 
-static bool sendCMD (const char *cmd, const char *act)
+bool sendCMD (const char *cmd, const char *act)
 {
     int i = 0;
     uint64_t t = 0;
