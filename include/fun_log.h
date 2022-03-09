@@ -13,7 +13,7 @@ extern "C" {
 #define LOG_CONFIG_COLOR
 #define LOG_CONFIG_TAGS
 #define LOG_CONFIG_NEWLINE
-
+//#define LOG_CONFIG_FUNC
 
 #define LOG_LEVEL_ASSERT 		0
 #define LOG_LEVEL_ERROR 		1
@@ -110,20 +110,27 @@ extern int printk_hex (const uint8_t *buff, uint count);
 #define LOG_NEWLINE "\n"
 #endif
 
+#if defined(LOG_CONFIG_FUNC)
 #if defined(LOG_CONFIG_COLOR)
-#define LOG_CALL_TPYE(tag, tag_color, format, ...)	\
-	printk("[%lld]%s%s%s(%d): " format "%s" LOG_NEWLINE,	\
-	       time_us_64()/1000, tag_color, tag, __func__, __LINE__, ##__VA_ARGS__, LOG_COLOR_OFF)
-
-#define LOG_CALL_TPYE0(color) printk("%s" color)
-#else
-#define LOG_CALL_TPYE(tag, tag_color, format, ...)	\
-	printk("[%lld]%s%s%s(%d): " format "%s" LOG_NEWLINE,	\
-	       time_us_64()/1000, LOG_COLOR_NONE, tag, __func__, __LINE__, ##__VA_ARGS__, LOG_COLOR_NONE)
-
-#define LOG_CALL_TPYE0(color) { ; }
+  #define LOG_CALL_TPYE(tag, tag_color, format, ...)	\
+  	printk("[%lld]%s%s%s(%d): " format "%s" LOG_NEWLINE,	\
+  	       time_us_64()/1000, tag_color, tag, __func__, __LINE__, ##__VA_ARGS__, LOG_COLOR_OFF)
+  #else
+  #define LOG_CALL_TPYE(tag, tag_color, format, ...)	\
+  	printk("[%lld]%s%s%s(%d): " format "%s" LOG_NEWLINE,	\
+  	       time_us_64()/1000, LOG_COLOR_NONE, tag, __func__, __LINE__, ##__VA_ARGS__, LOG_COLOR_NONE)
 #endif
-
+  #else
+  #if defined(LOG_CONFIG_COLOR)
+  #define LOG_CALL_TPYE(tag, tag_color, format, ...)	\
+  	printk("[%lld]%s%s: " format "%s" LOG_NEWLINE,	\
+  	       time_us_64()/1000, tag_color, tag, ##__VA_ARGS__, LOG_COLOR_OFF)
+  #else
+  #define LOG_CALL_TPYE(tag, tag_color, format, ...)	\
+  	printk("[%lld]%s%s: " format "%s" LOG_NEWLINE,	\
+  	       time_us_64()/1000, LOG_COLOR_NONE, tag, ##__VA_ARGS__, LOG_COLOR_NONE)
+  #endif
+#endif
 
 #define LOG_COLOR(tag, tag_color, format, ...) LOG_CALL_TPYE(tag, tag_color, format, ##__VA_ARGS__)
 
